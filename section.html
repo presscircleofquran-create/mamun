@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#04130F">
+<title>বিভাগ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;600;700&family=Amiri+Quran&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/islamic.css">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body class="p-body">
+<main class="p-wrap" id="app"></main>
+<script type="module">
+import { db, collection, getDocs, getDoc, doc, query, where } from "./assets/firebase.js";
+import { mountBg, mountNav, requireUser, touchUser, topHtml, setTop, btnHtml, loaderHtml, msgHtml, emptyHtml, ICON, qs, esc, toBn, T } from "./assets/app.js";
+
+mountBg('section'); mountNav('home');
+const app = document.getElementById('app');
+document.body.insertAdjacentHTML('afterbegin', topHtml({ title: '...', back: 'index.html' }));
+app.innerHTML = loaderHtml(3);
+const user = await requireUser(); touchUser(user);
+const hid = qs('h'), pid = qs('p') || '';
+const byOrder = (a, b) => (a.order || 0) - (b.order || 0);
+try {
+  if (!hid) throw new Error('no id');
+  const [home, snap] = await Promise.all([getDoc(doc(db, 'home_buttons', hid)), getDocs(query(collection(db, 'section_buttons'), where('homeId', '==', hid)))]);
+  const homeName = home.exists() ? home.data().name : T('sec_eyebrow');
+  const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const byId = Object.fromEntries(all.map(x => [x.id, x]));
+  const cur = pid ? byId[pid] : null;
+  const name = cur ? cur.name : homeName;
+  // breadcrumb of folders above this page
+  const trail = []; for (let x = cur; x; x = x.parentId ? byId[x.parentId] : null) trail.unshift(x.name);
+  document.title = name; setTop(name, cur ? [homeName, ...trail.slice(0, -1)].join(' › ') : '');
+  document.getElementById('pBack').href = cur ? (cur.parentId ? 'section.html?h=' + encodeURIComponent(hid) + '&p=' + encodeURIComponent(cur.parentId) : 'section.html?h=' + encodeURIComponent(hid)) : 'index.html';
+  const items = all.filter(x => (x.parentId || '') === pid).sort(byOrder);
+  const hasKids = (id) => all.some(x => x.parentId === id);
+  const href = (b) => hasKids(b.id) ? 'section.html?h=' + encodeURIComponent(hid) + '&p=' + encodeURIComponent(b.id) : 'list.html?s=' + encodeURIComponent(b.id);
+  app.innerHTML = `<div class="p-pagehead"><span class="p-eyebrow">${esc(cur ? homeName : T('sec_eyebrow'))}</span><h2>${esc(name)}</h2><p>${items.length ? esc(T('sec_count', { n: toBn(items.length) })) : ''}</p></div>` +
+    (items.length ? `<div class="p-stack">${items.map((b, i) => btnHtml({ label: b.name, href: href(b), i, kind: trail.length })).join('')}</div>`
+      : emptyHtml(ICON.book, T('sec_empty')));
+} catch (err) { console.error(err); app.innerHTML = msgHtml(T('load_err'), true); }
+</script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#04130F">
+<title>খুঁজুন</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;600;700&family=Amiri+Quran&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/islamic.css">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body class="p-body">
+<main class="p-wrap" id="app"></main>
+<script type="module">
+import { db, collection, getDocs } from "./assets/firebase.js";
+import { mountBg, mountNav, requireUser, touchUser, loaderHtml, msgHtml, emptyHtml, ICON, esc, T } from "./assets/app.js";
+
+mountBg('search'); mountNav('search');
+const app = document.getElementById('app');
+app.innerHTML = `<div class="p-pagehead"><span class="p-eyebrow">${esc(T('search_eyebrow'))}</span><h2>${esc(T('search_title'))}</h2></div>
+  <label class="p-search">${ICON.search}<input id="q" type="search" placeholder="${esc(T('search_ph'))}" autocomplete="off"></label><div class="p-stack" id="res">${loaderHtml(3)}</div>`;
+const user = await requireUser(); touchUser(user);
+const res = document.getElementById('res');
+let all = [];
+try {
+  const [a, b] = await Promise.all([getDocs(collection(db, 'sub_buttons')), getDocs(collection(db, 'section_buttons'))]);
+  const secs = Object.fromEntries(b.docs.map(d => [d.id, d.data().name]));
+  all = a.docs.map(d => ({ id: d.id, name: d.data().name || '', sec: secs[d.data().sectionId] || '', text: (d.data().name || '') + ' ' + (secs[d.data().sectionId] || '') }));
+} catch (e) { console.error(e); res.innerHTML = msgHtml(T('load_err'), true); }
+const draw = () => {
+  const t = document.getElementById('q').value.trim().toLowerCase();
+  const list = (t ? all.filter(x => x.text.toLowerCase().includes(t)) : all).slice(0, 60);
+  res.innerHTML = list.length ? list.map((x, i) => `<a class="p-row" style="--i:${Math.min(i, 12)}" href="note.html?n=${encodeURIComponent(x.id)}"><span class="ic">${ICON.book}</span><span style="min-width:0"><b>${esc(x.name)}</b><small>${esc(x.sec)}</small></span><span class="ar">${ICON.next}</span></a>`).join('')
+    : emptyHtml(ICON.search, T('search_none_t'), T('search_none_s'));
+};
+document.getElementById('q').addEventListener('input', draw); if (all.length || !res.querySelector('.p-msg')) draw();
+</script>
+</body>
+</html>

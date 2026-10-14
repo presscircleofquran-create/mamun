@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#04130F">
+<title>ইসলামিক অ্যাপ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;600;700&family=Amiri+Quran&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/islamic.css">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body class="p-body">
+<main class="p-wrap" id="app"></main>
+<script type="module">
+import { db, collection, getDocs } from "./assets/firebase.js";
+import { mountBg, mountNav, requireUser, touchUser, heroHtml, homeBtnHtml, loaderHtml, msgHtml, emptyHtml, divider, siteData, ICON, esc, T } from "./assets/app.js";
+
+mountBg('home'); mountNav('home');
+const app = document.getElementById('app');
+const site = { siteName: 'ইসলামিক অ্যাপ', subtitle: '' };
+const draw = () => { app.innerHTML = heroHtml(site.siteName, site.subtitle) + divider() + `<div class="p-grid" id="grid">${loaderHtml(2)}</div>`; };
+draw();
+
+const user = await requireUser();
+touchUser(user);
+try { const { s: d } = await siteData(); if (d.siteName) site.siteName = d.siteName; if (d.subtitle) site.subtitle = d.subtitle; } catch (e) {}
+document.title = site.siteName; draw();
+
+const grid = document.getElementById('grid');
+try {
+  const snap = await getDocs(collection(db, 'home_buttons'));
+  const items = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
+  grid.classList.remove('p-skel');
+  grid.innerHTML = items.length
+    ? items.map((b, i) => homeBtnHtml({ label: b.name, href: 'section.html?h=' + encodeURIComponent(b.id), i })).join('')
+    : emptyHtml(ICON.book, T('home_empty_t'), T('home_empty_s'));
+} catch (err) { console.error(err); grid.innerHTML = msgHtml(T('load_err'), true); }
+</script>
+</body>
+</html>

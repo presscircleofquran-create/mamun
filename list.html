@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#04130F">
+<title>তালিকা</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;600;700&family=Amiri+Quran&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/islamic.css">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body class="p-body">
+<main class="p-wrap" id="app"></main>
+<script type="module">
+import { db, collection, getDocs, getDoc, doc, query, where } from "./assets/firebase.js";
+import { mountBg, mountNav, requireUser, touchUser, topHtml, setTop, btnHtml, loaderHtml, msgHtml, emptyHtml, ICON, qs, esc, toBn, T } from "./assets/app.js";
+
+mountBg('list'); mountNav('home');
+const app = document.getElementById('app');
+document.body.insertAdjacentHTML('afterbegin', topHtml({ title: '...', back: 'index.html' }));
+app.innerHTML = loaderHtml(4);
+const user = await requireUser(); touchUser(user);
+const sid = qs('s');
+try {
+  if (!sid) throw new Error('no id');
+  const sec = await getDoc(doc(db, 'section_buttons', sid));
+  const sd = sec.exists() ? sec.data() : {};
+  const name = sd.name || 'তালিকা';
+  document.title = name; setTop(name, '');
+  if (sd.homeId) document.getElementById('pBack').href = 'section.html?h=' + encodeURIComponent(sd.homeId) + (sd.parentId ? '&p=' + encodeURIComponent(sd.parentId) : '');
+  const [snap, rs] = await Promise.all([
+    getDocs(query(collection(db, 'sub_buttons'), where('sectionId', '==', sid))),
+    user ? getDocs(query(collection(db, 'reads'), where('uid', '==', user.uid))).catch(() => ({ docs: [] })) : { docs: [] }
+  ]);
+  const read = new Set(rs.docs.map(d => d.data().noteId));
+  const items = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
+  const done = items.filter(x => read.has(x.id)).length;
+  app.innerHTML = `<div class="p-pagehead"><span class="p-eyebrow">${esc(items.length ? T('list_progress', { done: toBn(done), total: toBn(items.length) }) : T('list_eyebrow'))}</span><h2>${esc(name)}</h2></div>` +
+    (items.length ? `<div class="p-stack">${items.map((b, i) => btnHtml({ label: b.name, href: 'note.html?n=' + encodeURIComponent(b.id), num: i + 1, i, read: read.has(b.id) })).join('')}</div>`
+      : emptyHtml(ICON.book, T('sec_empty')));
+} catch (err) { console.error(err); app.innerHTML = msgHtml(T('load_err'), true); }
+</script>
+</body>
+</html>

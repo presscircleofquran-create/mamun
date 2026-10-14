@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#04130F">
+<title>প্রোফাইল</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;600;700&family=Amiri+Quran&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/islamic.css">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body class="p-body">
+<main class="p-wrap" id="app"></main>
+<script type="module">
+import { db, collection, getDocs, doc, setDoc, query, where } from "./assets/firebase.js";
+import { mountBg, mountNav, requireUser, touchUser, logout, nameOf, avatarHtml, streakOf, dayKey, ago, fmtDate, loaderHtml, emptyHtml, divider, ICON, toBn, esc, T } from "./assets/app.js";
+
+mountBg('profile'); mountNav('profile');
+const app = document.getElementById('app');
+app.innerHTML = loaderHtml(3);
+const user = await requireUser();
+let profile = await touchUser(user) || {};
+let reads = [];
+try {
+  const rs = await getDocs(query(collection(db, 'reads'), where('uid', '==', user.uid)));
+  reads = rs.docs.map(d => d.data()).sort((a, b) => (b.lastAt || 0) - (a.lastAt || 0));
+} catch (e) { console.warn(e); }
+
+const days = profile.activeDays || [];
+const total = reads.reduce((s, r) => s + (r.count || 0), 0);
+const streak = streakOf(days);
+const week = [...Array(7)].map((_, i) => { const d = new Date(); d.setDate(d.getDate() - (6 - i)); return { on: days.includes(dayKey(d)), l: d.toLocaleDateString('bn-BD', { weekday: 'short' }) }; });
+
+function draw() {
+  const nm = nameOf(user, profile);
+  app.innerHTML = `
+  <section class="p-pcard">
+    ${avatarHtml(nm, user.photoURL)}
+    <h2 class="p-pname">${esc(nm)}</h2>
+    <p class="p-pmail">${esc(user.email || '')}</p>
+    <div class="p-chips"><span class="p-chip">${ICON.cal} ${esc(T('pf_joined'))} ${esc(fmtDate(profile.createdAt || Date.now()))}</span></div>
+    <button class="p-linkbtn" id="editBtn">${ICON.edit} ${esc(T('pf_edit'))}</button>
+    <form class="p-editname" id="editForm"><input id="nameIn" maxlength="40" value="${esc(nm)}" aria-label="নাম"><button type="submit">${esc(T('pf_save'))}</button></form>
+  </section>
+  <div class="p-stats">
+    <div class="p-stat" style="--i:2">${ICON.cal}<b>${toBn(days.length)}</b><span>${esc(T('pf_s3'))}</span></div>
+  </div>
+  <div class="p-week">${week.map(w => `<div class="${w.on ? 'on' : ''}"><i>${w.on ? ICON.check : ''}</i>${esc(w.l)}</div>`).join('')}</div>
+  ${divider(T('pf_hist'))}
+  <div class="p-stack" style="gap:10px" id="hist">${reads.length ? reads.slice(0, 30).map((r, i) => `
+    <a class="p-row" style="--i:${Math.min(i, 12)}" href="note.html?n=${encodeURIComponent(r.noteId)}"><span class="ic">${ICON.book}</span>
+      <span style="min-width:0"><b>${esc(r.name)}</b><small>${esc([r.homeName, r.sectionName].filter(Boolean).join(' › '))} · ${esc(ago(r.lastAt))}${r.count > 1 ? `<span class="cnt">${esc(T('pf_times', { n: toBn(r.count) }))}</span>` : ''}</small></span><span class="ar">${ICON.next}</span></a>`).join('')
+    : emptyHtml(ICON.book, T('pf_empty_t'), T('pf_empty_s'))}</div>
+  <div class="p-actions"><button class="p-act out" id="outBtn">${ICON.out} ${esc(T('pf_logout'))}</button></div>`;
+  document.getElementById('outBtn').onclick = logout;
+  const f = document.getElementById('editForm');
+  document.getElementById('editBtn').onclick = () => { f.classList.toggle('show'); document.getElementById('nameIn').focus(); };
+  f.onsubmit = async (e) => {
+    e.preventDefault();
+    const v = document.getElementById('nameIn').value.trim(); if (!v) return;
+    try { profile.name = v; await setDoc(doc(db, 'users', user.uid), { name: v }, { merge: true }); } catch (er) { console.error(er); }
+    draw();
+  };
+}
+draw();
+</script>
+</body>
+</html>

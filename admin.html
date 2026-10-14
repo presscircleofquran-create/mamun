@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ইসলামিক অ্যাডমিন প্যানেল</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;600;700&family=Amiri+Quran&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="assets/islamic.css">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  :root {
+    --bg: #EEF1EE; --card: #ffffff; --line: #DCE4DF; --soft: #62736d;
+    --red: #C64756; --red-bg: #FBE9EB;
+    --shadow: 0 1px 3px rgba(16, 40, 36, .08);
+    --shadow-lg: 0 20px 48px rgba(16, 40, 36, .22);
+  }
+  * { font-family: 'Hind Siliguri', 'Amiri', sans-serif; }
+  body { background: var(--bg); color: #16211e; min-height: 100vh; }
+  button { font: inherit; cursor: pointer; }
+  :focus-visible { outline: 2.5px solid var(--green); outline-offset: 2px; border-radius: 6px; }
+
+  /* ---------- login ---------- */
+  .login { display: none; min-height: 100vh; align-items: center; justify-content: center; padding: 20px;
+           background: radial-gradient(120% 120% at 20% 10%, #1f6a62 0%, #0d2b28 75%); }
+  body.locked .login { display: flex; }
+  body.locked .app { display: none; }
+  .login-box { background: #fff; width: 100%; max-width: 380px; border-radius: 20px; padding: 34px 28px; box-shadow: var(--shadow-lg); }
+  .login-box h1 { text-align: center; color: var(--green); font-size: 1.35rem; margin-bottom: 4px; }
+  .login-box .sub { text-align: center; color: var(--soft); font-size: .85rem; margin-bottom: 22px; }
+  .login-err { color: var(--red); font-size: .85rem; min-height: 1.2em; margin-bottom: 10px; }
+
+  /* ---------- layout ---------- */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { position: fixed; inset: 0 auto 0 0; width: 250px; z-index: 200; display: flex; flex-direction: column;
+             background: linear-gradient(180deg, var(--green), var(--green-dark)); color: var(--light); transition: transform .28s ease; }
+  .brand { display: flex; align-items: center; gap: 12px; padding: 22px 20px; border-bottom: 1px solid rgba(238,238,238,.12); }
+  .brand-mark { width: 44px; height: 44px; border-radius: 12px; background: var(--light); color: var(--green);
+                display: flex; align-items: center; justify-content: center; font-size: 20px; flex: none; }
+  .brand b { display: block; font-size: 1.05rem; }
+  .brand small { opacity: .7; font-size: .75rem; }
+  .side-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+  .nav-btn { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border: none; border-radius: 12px;
+             background: transparent; color: inherit; font-weight: 600; font-size: .97rem; text-align: left; transition: background .2s; }
+  .nav-btn i { width: 20px; text-align: center; }
+  .nav-btn:hover { background: rgba(238,238,238,.1); }
+  .nav-btn.active { background: var(--light); color: var(--green); }
+  .nav-btn .pill { margin-left: auto; background: rgba(238,238,238,.18); padding: 1px 9px; border-radius: 20px; font-size: .75rem; }
+  .nav-btn.active .pill { background: rgba(24,77,71,.12); }
+  .side-foot { padding: 14px 12px; border-top: 1px solid rgba(238,238,238,.12); display: flex; flex-direction: column; gap: 8px; }
+  .side-link { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; border-radius: 10px; border: none;
+               background: rgba(238,238,238,.1); color: var(--light); text-decoration: none; font-weight: 600; font-size: .88rem; }
+  .side-link:hover { background: rgba(238,238,238,.2); }
+  .backdrop { position: fixed; inset: 0; background: rgba(10,25,22,.5); z-index: 190; display: none; }
+  .backdrop.show { display: block; }
+
+  .main { margin-left: 250px; flex: 1; min-width: 0; padding: 22px 26px 60px; }
+  .topbar { display: none; align-items: center; gap: 12px; background: var(--card); border: 1px solid var(--line);
+            border-radius: 14px; padding: 10px 12px; margin-bottom: 16px; position: sticky; top: 8px; z-index: 80; box-shadow: var(--shadow); }
+  .hamburger { width: 40px; height: 40px; border: none; border-radius: 10px; background: var(--bg); color: var(--green); font-size: 1.05rem; }
+  .topbar-title { font-weight: 700; color: var(--green); }
+
+  .view { display: none; }
+  .view.active { display: block; animation: viewIn .3s ease; }
+  @keyframes viewIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .page-head { margin-bottom: 18px; }
+  .page-head h1 { font-size: 1.55rem; color: var(--green); }
+  .page-head p { color: var(--soft); font-size: .92rem; margin-top: 2px; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 22px; box-shadow: var(--shadow); }
+  .card h3 { font-size: 1.05rem; color: var(--green); margin-bottom: 2px; }
+  .card .hint { color: var(--soft); font-size: .84rem; margin-bottom: 16px; }
+  .two-col { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* ---------- stats ---------- */
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 18px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; box-shadow: var(--shadow); }
+  .stat.hero { background: linear-gradient(150deg, var(--green), #226b62); color: var(--light); border: none; }
+  .stat span { font-size: .85rem; color: var(--soft); font-weight: 600; }
+  .stat.hero span { color: #bfd8d3; }
+  .stat b { display: block; font-size: 2rem; margin-top: 4px; line-height: 1.1; }
+
+  .notice { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: #FFF6DD; border: 1px solid #F1DDA0; border-radius: 14px; padding: 14px 16px; margin-bottom: 18px; color: #5b4a12; }
+  .notice i { font-size: 1.2rem; }
+  .notice span { flex: 1; min-width: 200px; line-height: 1.6; font-size: .92rem; }
+
+  .dist-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 6px; border: none; background: transparent;
+              border-bottom: 1px dashed var(--line); text-align: left; border-radius: 8px; }
+  .dist-row:last-child { border-bottom: none; }
+  .dist-row:hover { background: var(--bg); }
+  .dist-name { min-width: 110px; max-width: 40%; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-track { flex: 1; height: 8px; border-radius: 20px; background: var(--bg); overflow: hidden; }
+  .bar-fill { display: block; height: 100%; border-radius: 20px; background: linear-gradient(90deg, var(--green), #2f8f84); }
+
+  /* ---------- forms ---------- */
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: .82rem; font-weight: 700; color: var(--soft); margin-bottom: 6px; }
+  input[type=text], input[type=email], input[type=password], select, textarea {
+    width: 100%; padding: 11px 14px; border: 1px solid var(--line); border-radius: 11px; background: #F6F8F6;
+    font-size: .95rem; color: #16211e; outline: none; transition: border-color .15s, box-shadow .15s; }
+  input:focus, select:focus, textarea:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(24,77,71,.14); background: #fff; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; border-radius: 12px; padding: 12px 20px;
+         font-weight: 700; font-size: .95rem; transition: filter .15s, transform .1s; }
+  .btn:active { transform: scale(.97); }
+  .btn:disabled { opacity: .6; cursor: not-allowed; }
+  .btn-primary { background: var(--green); color: var(--light); }
+  .btn-primary:hover { filter: brightness(1.15); }
+  .btn-ghost { background: var(--bg); color: #16211e; border: 1px solid var(--line); }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-warn { background: #B8934A; color: #fff; }
+  .btn-block { width: 100%; }
+
+  .preview-label { font-size: .78rem; font-weight: 700; color: var(--soft); margin: 4px 0 8px; }
+  .preview { background: #0E4D3A; border: 1px dashed var(--line); border-radius: 14px; padding: 16px; display: flex; justify-content: center; margin-bottom: 16px; }
+  .preview * { pointer-events: none; }
+  .preview .p-btn { width: 100%; max-width: 360px; animation: none; }
+  .preview .p-card { flex: 0 0 190px; animation: none; }
+  .urow { display: grid; grid-template-columns: 44px 1fr auto; gap: 12px; align-items: center; padding: 12px; border: 1px solid var(--line); border-radius: 14px; margin-bottom: 10px; background: #fff; cursor: pointer; transition: .2s; }
+  .urow:hover { border-color: var(--green); box-shadow: var(--shadow); }
+  .uav { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: #2A1D04; background: #E2BE63; overflow: hidden; position: relative; }
+  .uav em { font-style: normal; }
+  .uav img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .urow b { display: block; } .urow small { color: var(--soft); word-break: break-all; }
+  .utag { display: inline-block; font-size: .74rem; padding: 2px 9px; border-radius: 99px; background: #E8F3F0; color: var(--green); font-weight: 600; margin-left: 4px; }
+  .rrow { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: .92rem; }
+  .rrow small { color: var(--soft); display: block; }
+  .lockbox { text-align: center; }
+  .lockbox p { color: var(--soft); line-height: 1.7; margin-bottom: 14px; font-size: .92rem; }
+  .lockbox code { background: #EEF1EE; padding: 2px 7px; border-radius: 6px; word-break: break-all; }
+
+  /* ---------- list items ---------- */
+  .item { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; margin-bottom: 10px; background: #fff; }
+  .item-num { flex: none; width: 36px; height: 36px; border-radius: 10px; background: var(--green); color: var(--light); display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  .item-main { flex: 1; min-width: 0; }
+  .item-main b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item-main span { display: block; color: var(--soft); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item-actions { display: flex; gap: 6px; flex: none; }
+  .item-actions button { width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 9px; background: var(--bg); color: #16211e; }
+  .item-actions button:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
+  .item-actions button:disabled { opacity: .35; cursor: default; }
+  .item-actions button.danger { background: var(--red-bg); color: var(--red); border-color: transparent; }
+  .item-actions button.danger:hover { background: var(--red); color: #fff; }
+
+  .empty { text-align: center; padding: 38px 16px; color: var(--soft); }
+  .empty i { font-size: 2rem; color: var(--line); margin-bottom: 10px; display: block; }
+  .empty b { display: block; color: #16211e; margin-bottom: 3px; }
+
+  /* ---------- rich text editor ---------- */
+  .ed { border: 1px solid var(--line); border-radius: 14px; background: #fff; overflow: hidden; }
+  .ed:focus-within { border-color: var(--green); box-shadow: 0 0 0 3px rgba(24,77,71,.14); }
+  .ed-bar { display: flex; flex-wrap: wrap; gap: 6px 4px; padding: 8px; background: #F1F5F2; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 3; }
+  .ed-grp { display: flex; align-items: center; gap: 3px; padding-right: 7px; margin-right: 3px; border-right: 1px solid var(--line); }
+  .ed-grp:last-child { border-right: none; margin-right: 0; padding-right: 0; }
+  .ed-bar button, .ed-color { width: 32px; height: 32px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: #26352f;
+                              display: inline-flex; align-items: center; justify-content: center; font-size: .9rem; position: relative; }
+  .ed-bar button:hover, .ed-color:hover { background: #fff; border-color: var(--line); }
+  .ed-bar button.on { background: var(--green); color: var(--light); }
+  .ed-bar .tx { font-size: 1rem; font-weight: 700; text-decoration-thickness: 2px; font-family: 'Hind Siliguri', sans-serif; }
+  .ed-bar button .tx:not(b) { font-weight: 600; }
+  .ed-bar select { width: auto; padding: 6px 8px; font-size: .84rem; border-radius: 8px; background: #fff; }
+  .ed-color input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+  .ed-color::after { content: ''; position: absolute; left: 7px; right: 7px; bottom: 3px; height: 3px; border-radius: 2px; background: var(--c, #184D47); }
+  .ed-bar button.sw { width: 20px; height: 20px; border-radius: 50%; background: var(--sw); border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); }
+  .ed-bar button.sw:hover { transform: scale(1.15); background: var(--sw); }
+  .ed-area { position: relative; min-height: 200px; max-height: 440px; overflow-y: auto; padding: 14px 18px; outline: none; background: #FFFDF8; }
+  .ed-area.is-empty::before { content: attr(data-ph); position: absolute; top: 14px; left: 18px; right: 18px; color: #9aa8a2; pointer-events: none; }
+
+  /* ---------- modal ---------- */
+  .modal-overlay { position: fixed; inset: 0; z-index: 1000; display: none; align-items: center; justify-content: center; padding: 18px;
+                   background: rgba(10,25,22,.55); backdrop-filter: blur(3px); }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; width: 100%; max-width: 560px; max-height: 94vh; border-radius: 20px; box-shadow: var(--shadow-lg);
+           display: flex; flex-direction: column; overflow: hidden; animation: pop .22s ease; }
+  .modal.small { max-width: 400px; }
+  .modal.wide { max-width: 800px; }
+  @keyframes pop { from { opacity: 0; transform: scale(.95) translateY(8px); } to { opacity: 1; transform: none; } }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+  .modal-head h2 { font-size: 1.1rem; color: var(--green); }
+  .modal-x { width: 34px; height: 34px; border: none; border-radius: 9px; background: var(--bg); }
+  .modal-body { padding: 20px; overflow-y: auto; }
+  .modal-foot { display: flex; gap: 10px; justify-content: flex-end; padding: 14px 20px; border-top: 1px solid var(--line); }
+
+  /* ---------- toast ---------- */
+  .toast-stack { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+  .toast { display: flex; align-items: center; gap: 10px; min-width: 220px; padding: 13px 18px; border-radius: 12px; background: #16211e; color: #fff;
+           font-size: .9rem; box-shadow: var(--shadow-lg); animation: tin .25s ease; }
+  .toast.out { opacity: 0; transform: translateX(24px); transition: .22s; }
+  @keyframes tin { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+  .toast.success i { color: #5fd08d; } .toast.error i { color: #ff8a80; } .toast.info i { color: #e9c46a; }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 1060px) { .two-col { grid-template-columns: 1fr; } }
+  @media (max-width: 900px) {
+    .sidebar { transform: translateX(-100%); box-shadow: var(--shadow-lg); }
+    .sidebar.open { transform: none; }
+    .main { margin-left: 0; padding: 12px 14px 80px; }
+    .topbar { display: flex; }
+  }
+  @media (max-width: 560px) {
+    input[type=text], input[type=email], input[type=password], select, textarea { font-size: 16px; }
+    .row2 { grid-template-columns: 1fr; }
+    .modal-overlay { align-items: flex-end; padding: 0; }
+    .modal { max-width: 100%; border-radius: 18px 18px 0 0; }
+    .item { flex-wrap: wrap; }
+    .item-actions { width: 100%; justify-content: flex-end; }
+  }
+
+  .preview a, .preview a * { text-decoration: none !important; }
+  /* ================= theme: green / gold / white (matches the website) ================= */
+  :root { --bg: color-mix(in srgb, var(--c4) 86%, var(--c3)); --card: color-mix(in srgb, var(--c4) 40%, #fff); --line: color-mix(in srgb, var(--c4) 68%, var(--c3)); --soft: color-mix(in srgb, var(--c2) 45%, #6b6b6b);
+          --green: var(--c2); --green-dark: var(--deep); --light: var(--card); --gold: var(--c3); --gold-d: color-mix(in srgb, var(--c3) 70%, #000); --gold-l: color-mix(in srgb, var(--c3) 38%, #fff);
+          --red: color-mix(in srgb, var(--c3) 55%, #000); --red-bg: var(--pale); --shadow: 0 3px 0 color-mix(in srgb, var(--c3) 30%, transparent); }
+  body { background: var(--bg); }
+  .sidebar { background: var(--deep); border-right: 4px double var(--gold); }
+  .brand { padding: 18px 20px; border-bottom: 1px solid color-mix(in srgb, var(--c3) 40%, transparent); }
+  .brand small { color: var(--gold-l); opacity: .9; }
+  .nav-btn:hover { background: color-mix(in srgb, var(--c3) 16%, transparent); }
+  .nav-btn.active { background: var(--gold); color: var(--deep); }
+  .nav-btn .pill { background: color-mix(in srgb, var(--c3) 28%, transparent); } .nav-btn.active .pill { background: color-mix(in srgb, var(--deep) 16%, transparent); }
+  .side-foot { border-top: 1px solid color-mix(in srgb, var(--c3) 40%, transparent); }
+  .side-link { background: color-mix(in srgb, var(--c3) 16%, transparent); color: var(--gold-l); } .side-link:hover { background: color-mix(in srgb, var(--c3) 30%, transparent); }
+  .topbar { border: 2px solid var(--line); } .hamburger { background: var(--bg); }
+  .page-head h1 { color: var(--green); display: inline-block; padding-bottom: 4px; border-bottom: 4px solid var(--gold); }
+  .page-head p { margin-top: 8px; max-width: 70ch; line-height: 1.6; }
+  .card { border: 2px solid var(--line); border-radius: 20px; }
+  .card h3 { display: flex; align-items: center; gap: 8px; } .card h3 i { color: var(--gold-d); }
+  .stat { border: 2px solid var(--line); box-shadow: var(--shadow); }
+  .stat.hero { background: var(--green); border: 2px solid var(--gold); } .stat.hero span { color: var(--gold-l); }
+  .bar-fill { background: var(--gold); }
+  input[type=text], input[type=email], input[type=password], input[type=url], input[type=search], select, textarea {
+    width: 100%; padding: 11px 14px; border: 2px solid var(--line); border-radius: 12px; background: var(--card); font-size: .95rem; color: #16211e; outline: none; }
+  input:focus, select:focus, textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c3) 25%, transparent); background: #fff; }
+  .btn { border-radius: 14px; }
+  .btn-primary { background: var(--green); color: #fff; box-shadow: 0 4px 0 var(--deep); } .btn-primary:hover { filter: none; background: color-mix(in srgb, var(--c2) 85%, #fff); } .btn-primary:active { box-shadow: 0 1px 0 var(--deep); transform: translateY(3px); }
+  .btn-ghost { background: #fff; border: 2px solid var(--line); }
+  .btn-danger { background: var(--red); color: #fff; } .btn-warn { background: var(--gold); color: var(--deep); }
+  .item { border: 2px solid var(--line); background: #fff; }
+  .item-num { background: var(--green); color: var(--gold-l); border-radius: 50%; }
+  .item-actions button { border: 2px solid var(--line); background: #fff; } .item-actions button:hover:not(:disabled) { border-color: var(--gold); color: var(--green); background: var(--gold-l); }
+  .urow { border: 2px solid var(--line); } .urow:hover { border-color: var(--gold); }
+  .utag { background: var(--gold-l); color: var(--deep); }
+  .ed, .ed-bar { border-color: var(--line); } .ed-bar { background: var(--bg); }
+  .ed-bar button.on { background: var(--green); }
+  .modal { border: 3px solid var(--gold); } .modal-head h2 { color: var(--green); }
+  .toast { background: var(--deep); border: 2px solid var(--gold); } .toast.error i { color: var(--gold-l); }
+  .login { background: var(--deep); }
+  .notice { background: var(--pale); border: 2px solid var(--gold-l); }
+  .crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .crumbs button { border: 2px solid var(--line); background: #fff; border-radius: 99px; padding: 6px 14px; font-weight: 600; color: var(--green); }
+  .crumbs button:hover { border-color: var(--gold); background: var(--gold-l); }
+  .crumbs button.cur { background: var(--green); color: var(--gold-l); border-color: var(--green); cursor: default; }
+  .crumbs i { color: var(--gold-d); font-size: .75rem; }
+  .rule { margin-top: 14px; padding: 10px 12px; border-radius: 12px; background: var(--pale); border: 1px dashed var(--gold); color: color-mix(in srgb, var(--c3) 40%, #000); font-size: .88rem; line-height: 1.6; } .rule i { color: var(--gold-d); }
+  .where { display: block; margin-top: 5px; font-size: .78rem; color: color-mix(in srgb, var(--c3) 45%, #000); line-height: 1.5; } .where i { color: var(--gold-d); }
+  .set-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px; align-items: start; }
+  .savebar { grid-column: 1 / -1; position: sticky; bottom: 0; z-index: 20; display: flex; gap: 10px; flex-wrap: wrap; padding: 12px 0; background: linear-gradient(transparent, var(--bg) 40%); }
+  .lab-group { margin-bottom: 18px; } .lab-group h3 { margin-bottom: 12px; }
+  .lab-row { padding: 12px 0; border-top: 1px dashed var(--line); } .lab-row:first-of-type { border-top: 0; padding-top: 0; }
+  .lab-row label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: .9rem; font-weight: 700; color: var(--green); margin-bottom: 6px; }
+  .lab-row .tag { font-size: .7rem; font-weight: 600; background: var(--gold-l); color: color-mix(in srgb, var(--c3) 40%, #000); padding: 1px 9px; border-radius: 99px; }
+  .lab-row .def { font-size: .74rem; color: var(--soft); font-weight: 500; }
+  .lab-row .ctl { display: flex; gap: 8px; } .lab-row .ctl button { flex: none; width: 42px; border: 2px solid var(--line); border-radius: 12px; background: #fff; color: var(--soft); }
+  .lab-row .ctl button:hover { border-color: var(--gold); background: var(--gold-l); }
+  .lab-row.changed input { border-color: var(--gold); background: var(--pale); }
+  .pal-auto { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; margin-bottom: 14px; border: 2px dashed var(--gold); border-radius: 14px; background: var(--pale); cursor: pointer; } .pal-auto input { width: 20px; height: 20px; margin-top: 3px; accent-color: var(--green); flex: none; } .pal-auto b { display: block; color: var(--green); } .pal-auto small { display: block; color: var(--soft); line-height: 1.5; margin-top: 2px; }
+  .pal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+  .pal-box { position: relative; padding: 8px 8px 10px; border: 3px solid var(--line); border-radius: 18px; background: #fff; cursor: pointer; transition: transform .15s, border-color .15s; }
+  .pal-box:hover { transform: translateY(-2px); border-color: var(--gold); }
+  .pal-box.on { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-l); }
+  .pal-sw { display: flex; height: 56px; border-radius: 12px; overflow: hidden; border: 1px solid rgba(0,0,0,.12); } .pal-sw i { flex: 1; display: block; }
+  .pal-sw.big { height: 74px; border-radius: 16px; margin-top: 6px; }
+  .pal-cap { display: block; margin-top: 8px; text-align: center; font-size: .8rem; color: var(--soft); font-weight: 600; } .pal-box.on .pal-cap { color: var(--green); }
+  .pal-x { position: absolute; top: -9px; right: -9px; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line); background: #fff; color: var(--soft); display: grid; place-items: center; cursor: pointer; font-size: .8rem; }
+  .pal-x:hover { background: var(--red); color: #fff; border-color: var(--red); }
+  .pal-ins { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px 18px; }
+  .pal-ins input[type=color] { width: 100%; height: 46px; padding: 3px; border: 2px solid var(--line); border-radius: 12px; background: #fff; cursor: pointer; }
+  .pill-n { font-size: .75rem; background: var(--gold-l); color: var(--green); padding: 1px 10px; border-radius: 99px; margin-left: 4px; }
+</style>
+</head>
+<body>
+
+<!-- ===================== ACCESS (login / admin check) ===================== -->
+<div class="login">
+  <div class="login-box lockbox">
+    <h1>অ্যাডমিন প্যানেল</h1>
+    <p class="sub" id="lockSub">যাচাই করা হচ্ছে...</p>
+    <p id="lockMsg"></p>
+    <div id="lockBtns" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"></div>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div class="app">
+  <div class="backdrop" id="backdrop"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div><b>ইসলামিক অ্যাপ</b><small>অ্যাডমিন প্যানেল</small></div>
+    </div>
+    <nav class="side-nav">
+      <button class="nav-btn active" data-view="overview"><i class="fa-solid fa-chart-simple"></i> ড্যাশবোর্ড</button>
+      <button class="nav-btn" data-view="homes"><i class="fa-solid fa-grip"></i> হোম বাটন <span class="pill" id="navHomes">0</span></button>
+      <button class="nav-btn" data-view="sections"><i class="fa-solid fa-layer-group"></i> সেকশন বাটন <span class="pill" id="navSections">0</span></button>
+      <button class="nav-btn" data-view="subs"><i class="fa-solid fa-list-ol"></i> নম্বর বাটন ও নোট <span class="pill" id="navSubs">0</span></button>
+      <button class="nav-btn" data-view="users"><i class="fa-solid fa-users"></i> ইউজার ও অ্যাক্টিভিটি <span class="pill" id="navUsers">0</span></button>
+      <button class="nav-btn" data-view="labels"><i class="fa-solid fa-font"></i> লেখা ও লেবেল</button>
+      <button class="nav-btn" data-view="colors"><i class="fa-solid fa-palette"></i> রঙের কম্বিনেশন</button>
+      <button class="nav-btn" data-view="settings"><i class="fa-solid fa-gear"></i> সেটিংস</button>
+    </nav>
+    <div class="side-foot">
+      <a class="side-link" href="index.html" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> সাইট দেখুন</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <button class="hamburger" id="hamburger" aria-label="মেনু"><i class="fa-solid fa-bars"></i></button>
+      <div class="topbar-title" id="topTitle">ড্যাশবোর্ড</div>
+    </div>
+
+    <!-- ============ OVERVIEW ============ -->
+    <section class="view active" id="view-overview">
+      <div class="page-head"><h1>ড্যাশবোর্ড</h1><p>আপনার ওয়েবসাইটের সার্বিক অবস্থা এক নজরে</p></div>
+      <div class="stat-row">
+        <div class="stat hero"><span>হোম বাটন</span><b id="statHomes">0</b></div>
+        <div class="stat"><span>সেকশন বাটন</span><b id="statSections">0</b></div>
+        <div class="stat"><span>নম্বর বাটন</span><b id="statSubs">0</b></div>
+        <div class="stat"><span>লেখা (নোট) আছে</span><b id="statNotes">0</b></div>
+      </div>
+      <div class="card">
+        <h3>কোন হোম বাটনে কতটি সেকশন বাটন</h3>
+        <p class="hint">কোনো বাটনে ক্লিক করলে তার সেকশন পরিচালনার পেজে যাবেন</p>
+        <div id="distList"></div>
+      </div>
+    </section>
+
+    <!-- ============ HOME BUTTONS ============ -->
+    <section class="view" id="view-homes">
+      <div class="page-head"><h1>হোম বাটন</h1><p>হোম পেজে যে বাটনগুলো দেখাবে — শুধু নাম থাকবে। ক্লিক করলে সেকশন বাটনের পেজ খুলবে</p></div>
+      <div class="two-col">
+        <div class="card">
+          <h3>নতুন হোম বাটন</h3>
+          <p class="hint">নাম লিখলেই নিচে বাটনের ডিজাইন দেখতে পাবেন</p>
+          <form id="homeForm">
+            <div class="field"><label>বাটনের নাম</label><input type="text" id="homeName" maxlength="60" placeholder="যেমন: কুরআন মাজীদ" required></div>
+            <div class="preview-label">প্রিভিউ</div>
+            <div class="preview" id="homePreview"></div>
+            <button class="btn btn-primary btn-block" type="submit" id="homeAddBtn"><i class="fa-solid fa-plus"></i> বাটন যোগ করুন</button>
+          </form>
+        </div>
+        <div class="card">
+          <h3>বর্তমান হোম বাটন</h3>
+          <p class="hint">তীর চিহ্ন দিয়ে ক্রম বদলান, <i class="fa-solid fa-list-ul"></i> দিয়ে সেকশন বাটন দেখুন</p>
+          <div id="homesList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SECTION BUTTONS ============ -->
+    <section class="view" id="view-sections">
+      <div class="page-head"><h1>সেকশন বাটন</h1><p>হোম বাটনের ভেতরে যে বাটনগুলো দেখাবে। ফোল্ডারের মতো — যেকোনো সেকশন বাটনের ভেতরে আবার সেকশন বাটন যোগ করা যায়।</p></div>
+      <div class="card" style="margin-bottom:18px;">
+        <div class="field">
+          <label>১. কোন হোম বাটনের ভেতরে কাজ করবেন?</label>
+          <select id="secHomeSelect"></select>
+        </div>
+        <div class="field" style="margin-bottom:0;">
+          <label>২. এখন কোন ফোল্ডারের ভেতরে আছেন? <small style="font-weight:500">(নামে ক্লিক করে উপরের স্তরে ফিরুন)</small></label>
+          <div class="crumbs" id="secCrumbs"></div>
+        </div>
+        <p class="rule"><i class="fa-solid fa-circle-info"></i> নিয়ম: একটি সেকশন বাটনের ভেতরে <b>হয় আরও সেকশন বাটন</b>, <b>নয়তো নম্বর বাটন (নোট)</b> থাকতে পারবে — দুটো একসাথে নয়।</p>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <h3 id="secFormTitle">নতুন সেকশন বাটন</h3>
+          <p class="hint" id="secFormHint">শুধু নাম লিখুন</p>
+          <form id="secForm">
+            <div class="field"><label>বাটনের নাম</label><input type="text" id="secName" maxlength="70" placeholder="যেমন: সূরা সমূহ" required></div>
+            <div class="preview-label">প্রিভিউ</div>
+            <div class="preview" id="secPreview"></div>
+            <button class="btn btn-primary btn-block" type="submit" id="secAddBtn"><i class="fa-solid fa-plus"></i> সেকশন বাটন যোগ করুন</button>
+          </form>
+        </div>
+        <div class="card">
+          <h3 id="secListTitle">সেকশন বাটনগুলো</h3>
+          <p class="hint" id="secCountHint">—</p>
+          <div id="secList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ NUMBER BUTTONS + NOTES ============ -->
+    <section class="view" id="view-subs">
+      <div class="page-head"><h1>নম্বর বাটন ও নোট</h1><p>সেকশন বাটনে ক্লিক করলে যে নম্বর বাটনের তালিকা আসবে, আর সেই বাটনে ক্লিক করলে যে লেখা আসবে</p></div>
+      <div class="card" style="margin-bottom:18px;">
+        <div class="row2">
+          <div class="field" style="margin-bottom:0;"><label>হোম বাটন</label><select id="subHomeSelect"></select></div>
+          <div class="field" style="margin-bottom:0;"><label>সেকশন বাটন</label><select id="subSecSelect"></select></div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <h3>নতুন নম্বর বাটন</h3>
+          <p class="hint">বাটনে শুধু নাম থাকবে (নম্বর নিজে থেকেই বসবে)। লেখা থাকবে ক্লিক করলে যে পেজ খোলে সেখানে</p>
+          <form id="subForm">
+            <div class="field"><label>বাটনের নাম</label><input type="text" id="subName" maxlength="90" placeholder="যেমন: সূরা আল-ফাতিহা" required></div>
+            <div class="field"><label>নোট / লেখা</label><div id="subEditorHost"></div></div>
+            <div class="preview-label">বাটন প্রিভিউ (নম্বরসহ)</div>
+            <div class="preview" id="subPreview"></div>
+            <button class="btn btn-primary btn-block" type="submit" id="subAddBtn"><i class="fa-solid fa-plus"></i> নম্বর বাটন যোগ করুন</button>
+          </form>
+        </div>
+        <div class="card">
+          <h3>এই সেকশনের নম্বর বাটনগুলো</h3>
+          <p class="hint" id="subCountHint">—</p>
+          <div id="subsList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ USERS ============ -->
+    <section class="view" id="view-users">
+      <div class="page-head"><h1>ইউজার ও অ্যাক্টিভিটি</h1><p>কে কে লগইন করেছে এবং কে কী পড়াশোনা করেছে</p></div>
+      <div class="stat-row">
+        <div class="stat hero"><span>মোট ইউজার</span><b id="uTotal">0</b></div>
+        <div class="stat"><span>আজ সক্রিয়</span><b id="uToday">0</b></div>
+        <div class="stat"><span>মোট নোট পড়া</span><b id="uReads">0</b></div>
+      </div>
+      <div class="card" style="margin-bottom:16px">
+        <h3>সবচেয়ে বেশি পড়া নোট</h3>
+        <div id="uTop" style="margin-top:8px"></div>
+      </div>
+      <div class="card">
+        <div class="field"><input type="search" id="uSearch" placeholder="নাম বা ইমেইল দিয়ে খুঁজুন..."></div>
+        <div id="uList"></div>
+      </div>
+    </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section class="view" id="view-settings">
+      <div class="page-head"><h1>সেটিংস</h1><p>সাইটের নাম ও স্লোগান। ঘরের নিচে লেখা আছে সেটা সাইটের কোথায় দেখাবে।</p></div>
+      <form id="settingsForm" class="set-grid">
+        <div class="card">
+          <h3><i class="fa-solid fa-mosque"></i> সাইটের নাম</h3><p class="hint">হোম পেজের মূল পরিচয়</p>
+          <div class="field"><label>সাইটের নাম</label><input type="text" id="s_siteName" maxlength="60" placeholder="ইসলামিক অ্যাপ"><span class="where"><i class="fa-solid fa-location-dot"></i> হোম পেজের উপরের বক্সের বড় লেখা</span></div>
+          <div class="field"><label>স্লোগান (ছোট লাইন)</label><input type="text" id="s_subtitle" maxlength="90" placeholder="যেমন: জ্ঞান ও আমলের পথে"><span class="where"><i class="fa-solid fa-location-dot"></i> হোম পেজে নামের নিচে — ফাঁকা রাখলে দেখাবে না</span></div>
+        </div>
+        <div class="savebar"><button class="btn btn-primary" type="submit" id="settingsBtn"><i class="fa-solid fa-floppy-disk"></i> সেটিংস সেভ করুন</button></div>
+      </form>
+    </section>
+
+    <!-- ============ COLOURS ============ -->
+    <section class="view" id="view-colors">
+      <div class="page-head"><h1>রঙের কম্বিনেশন</h1><p>একটি বক্সে ক্লিক করলেই পুরো ওয়েবসাইট ও এই অ্যাডমিন প্যানেলের রং বদলে যাবে। নিজের পছন্দের ৪ রং দিয়ে নতুন বক্স বানাতে পারবেন, আবার যেকোনো বক্স মুছেও ফেলতে পারবেন।</p></div>
+      <div class="card">
+        <h3><i class="fa-solid fa-palette"></i> কম্বিনেশন বক্স <span class="pill-n" id="palCount"></span></h3>
+        <label class="pal-auto"><input type="checkbox" id="palAuto"><span><b>প্রতি ২৪ ঘণ্টায় রং নিজে নিজে বদলাবে</b><small id="palAutoNote">চালু করলে নিচের বক্সগুলো থেকে একটার পর একটা রং প্রতিদিন সাইটে ও অ্যাডমিনে বসবে।</small></span></label>
+        <div class="pal-grid" id="palGrid"></div>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn btn-ghost" type="button" id="palReset"><i class="fa-solid fa-rotate-left"></i> ডিফল্ট ৫টি বক্স ফিরিয়ে আনুন</button></div>
+      </div>
+      <div class="card" style="margin-top:18px">
+        <h3><i class="fa-solid fa-plus"></i> নিজের কম্বিনেশন বানান</h3><p class="hint">৪টি রং বেছে নিন, নিচে লাইভ প্রিভিউ দেখুন, তারপর বক্স যোগ করুন।</p>
+        <div class="pal-ins">
+          <div class="field"><label>১. ব্যাকগ্রাউন্ড</label><input type="color" id="palIn0" value="#0E4D3A"><span class="where"><i class="fa-solid fa-location-dot"></i> পেজের পেছনের রং; উপরের বার ও হিরো বক্সের গাঢ় রংও এটা থেকেই হয়</span></div>
+          <div class="field"><label>২. প্রধান রং</label><input type="color" id="palIn1" value="#0F5A46"><span class="where"><i class="fa-solid fa-location-dot"></i> বাটনের ব্যাজ, নিচের মেনুর সক্রিয় ট্যাব, কার্ডের লেখার রং</span></div>
+          <div class="field"><label>৩. হাইলাইট</label><input type="color" id="palIn2" value="#D4A83F"><span class="where"><i class="fa-solid fa-location-dot"></i> বর্ডার, তারা, বাটনের ফ্রেম ও আইকন</span></div>
+          <div class="field"><label>৪. হালকা রং</label><input type="color" id="palIn3" value="#F7F1E1"><span class="where"><i class="fa-solid fa-location-dot"></i> কার্ড, মেনু ও নোটের কাগজের ভেতরের রং</span></div>
+        </div>
+        <div class="pal-sw big" id="palLive"></div>
+        <div style="margin-top:14px"><button class="btn btn-primary" type="button" id="palAdd"><i class="fa-solid fa-plus"></i> বক্স যোগ করুন</button></div>
+      </div>
+    </section>
+
+    <!-- ============ LABELS (every text of the site) ============ -->
+    <section class="view" id="view-labels">
+      <div class="page-head"><h1>লেখা ও লেবেল</h1><p>সাইটের প্রতিটি বাটন, শিরোনাম ও বার্তার লেখা এখান থেকে বদলান। প্রতিটির নিচে লেখা আছে সেটা কোন পেজের কোথায় দেখায়। ঘর ফাঁকা রাখলে আগের (ডিফল্ট) লেখাই থাকবে।</p></div>
+      <div class="card" style="margin-bottom:16px;"><div class="field" style="margin-bottom:0"><input type="search" id="labSearch" placeholder="লেখা খুঁজুন... (যেমন: প্রোফাইল, লগআউট)"></div></div>
+      <div id="labList"></div>
+      <div class="savebar"><button class="btn btn-primary" type="button" id="labSave"><i class="fa-solid fa-floppy-disk"></i> সব লেখা সেভ করুন</button><button class="btn btn-ghost" type="button" id="labReset"><i class="fa-solid fa-rotate-left"></i> সব ডিফল্টে ফেরান</button></div>
+    </section>
+  </main>
+</div>
+
+<!-- ===== USER DETAIL ===== -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal">
+    <div class="modal-head"><h2 id="umTitle">ইউজার</h2><button class="modal-x" data-close="userModal"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body" id="umBody"></div>
+  </div>
+</div>
+
+<!-- ===== EDIT HOME ===== -->
+<div class="modal-overlay" id="editHomeModal">
+  <div class="modal small">
+    <div class="modal-head"><h2>হোম বাটন এডিট</h2><button class="modal-x" data-close="editHomeModal"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="editHomeId">
+      <div class="field" style="margin-bottom:0;"><label>বাটনের নাম</label><input type="text" id="editHomeName" maxlength="60"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close="editHomeModal">বাতিল</button>
+      <button class="btn btn-primary" id="editHomeSave"><i class="fa-solid fa-floppy-disk"></i> সেভ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EDIT SECTION ===== -->
+<div class="modal-overlay" id="editSecModal">
+  <div class="modal small">
+    <div class="modal-head"><h2>সেকশন বাটন এডিট</h2><button class="modal-x" data-close="editSecModal"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="editSecId">
+      <div class="field" style="margin-bottom:0;"><label>বাটনের নাম</label><input type="text" id="editSecName" maxlength="70"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close="editSecModal">বাতিল</button>
+      <button class="btn btn-primary" id="editSecSave"><i class="fa-solid fa-floppy-disk"></i> সেভ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EDIT NUMBER BUTTON + NOTE ===== -->
+<div class="modal-overlay" id="editSubModal">
+  <div class="modal wide">
+    <div class="modal-head"><h2>নম্বর বাটন ও নোট এডিট</h2><button class="modal-x" data-close="editSubModal"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body">
+      <input type="hidden" id="editSubId">
+      <div class="field"><label>বাটনের নাম</label><input type="text" id="editSubName" maxlength="90"></div>
+      <div class="field" style="margin-bottom:0;"><label>নোট / লেখা</label><div id="editSubEditorHost"></div></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close="editSubModal">বাতিল</button>
+      <button class="btn btn-primary" id="editSubSave"><i class="fa-solid fa-floppy-disk"></i> সেভ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CONFIRM ===== -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal small">
+    <div class="modal-head"><h2>নিশ্চিত করুন</h2><button class="modal-x" data-close="confirmModal"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body"><p id="confirmMsg" style="line-height:1.7;color:var(--soft);"></p></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" data-close="confirmModal">বাতিল</button>
+      <button class="btn btn-danger" id="confirmYes"><i class="fa-solid fa-trash"></i> হ্যাঁ, মুছে ফেলুন</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<!-- Core UI (plain script): tab / menu kaj kore, Firebase load na hole-o -->
+<script>
+(function () {
+  var titles = { overview: 'ড্যাশবোর্ড', homes: 'হোম বাটন', sections: 'সেকশন বাটন', subs: 'নম্বর বাটন ও নোট', users: 'ইউজার ও অ্যাক্টিভিটি', labels: 'লেখা ও লেবেল', colors: 'রঙের কম্বিনেশন', settings: 'সেটিংস' };
+  function closeSide() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('backdrop').classList.remove('show');
+  }
+  window.islShowView = function (v) {
+    document.querySelectorAll('.view').forEach(function (s) { s.classList.toggle('active', s.id === 'view-' + v); });
+    document.querySelectorAll('.nav-btn').forEach(function (b) { b.classList.toggle('active', b.dataset.view === v); });
+    document.getElementById('topTitle').textContent = titles[v] || '';
+    closeSide();
+    window.scrollTo(0, 0);
+  };
+  document.querySelectorAll('.nav-btn').forEach(function (b) {
+    b.addEventListener('click', function () { window.islShowView(b.dataset.view); });
+  });
+  document.getElementById('hamburger').addEventListener('click', function () {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('backdrop').classList.add('show');
+  });
+  document.getElementById('backdrop').addEventListener('click', closeSide);
+
+  window.showAdminError = function (msg) {
+    if (document.getElementById('loadErr')) return;
+    var b = document.createElement('div');
+    b.id = 'loadErr';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#b91c1c;color:#fff;padding:12px 18px;font-size:13px;text-align:center;';
+    b.textContent = 'ডেটা লোড করা যায়নি — ইন্টারনেট চেক করুন এবং ফাইলটি সরাসরি না খুলে hosting বা local server দিয়ে খুলুন। (' + (msg || 'unknown error') + ')';
+    document.body.prepend(b);
+  };
+  setTimeout(function () { if (!window._adminLoaded) window.showAdminError('Firebase স্ক্রিপ্ট লোড হয়নি'); }, 7000);
+})();
+</script>
+
+<script type="module">
+import {
+  db, deleteDoc,
+  collection, getDocs, getDoc, doc, addDoc, setDoc, updateDoc, writeBatch, serverTimestamp
+} from "./assets/firebase.js";
+import { injectDefs } from "./assets/islamic.js";
+import { esc, btnHtml, homeBtnHtml, cleanHtml, textToHtml, plainText, ago, fmtDate, toBn, streakOf, dayKey, avatarHtml, hashPw, SITE_KEY, applyPalette, autoPalette, DEFAULT_PALETTES } from "./assets/app.js";
+import { LABELS, LABEL_GROUPS } from "./assets/labels.js";
+
+window._adminLoaded = true;
+injectDefs();
+
+const $ = (id) => document.getElementById(id);
+const byOrder = (a, b) => (a.order || 0) - (b.order || 0);
+let homes = [], sections = [], subs = [], users = [], reads = [];
+
+/* ================= helpers ================= */
+function toast(msg, type = 'info') {
+  const icons = { success: 'fa-circle-check', error: 'fa-circle-exclamation', info: 'fa-circle-info' };
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.innerHTML = '<i class="fa-solid ' + (icons[type] || icons.info) + '"></i><span>' + esc(msg) + '</span>';
+  $('toastStack').appendChild(el);
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 260); }, 3200);
+}
+const openModal = (id) => $(id).classList.add('open');
+const closeModal = (id) => $(id).classList.remove('open');
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+});
+
+let confirmCb = null;
+function askConfirm(msg, cb, yes) { $('confirmMsg').textContent = msg; $('confirmYes').innerHTML = yes || '<i class="fa-solid fa-trash"></i> হ্যাঁ, মুছে ফেলুন'; confirmCb = cb; openModal('confirmModal'); }
+$('confirmYes').addEventListener('click', async () => {
+  const cb = confirmCb; confirmCb = null; closeModal('confirmModal');
+  if (cb) await cb();
+});
+
+async function busy(btn, text, fn) {
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + text;
+  try { return await fn(); }
+  catch (err) { console.error(err); toast('ত্রুটি: ' + (err.message || err), 'error'); }
+  finally { btn.disabled = false; btn.innerHTML = orig; }
+}
+const emptyBox = (icon, title, sub) => '<div class="empty"><i class="fa-solid ' + icon + '"></i><b>' + title + '</b><span>' + sub + '</span></div>';
+const secsOf = (homeId) => sections.filter(s => s.homeId === homeId).sort(byOrder);
+const subsOf = (secId) => subs.filter(s => s.sectionId === secId).sort(byOrder);
+/* ---- folders: a section button can hold more section buttons (parentId) ---- */
+let secCur = '';
+const secDepth = () => { let n = 0; for (let x = sections.find(y => y.id === secCur); x && n < 20; x = sections.find(y => y.id === x.parentId)) n++; return n; };
+const kidsOf = (id, hid) => sections.filter(s => s.homeId === hid && (s.parentId || '') === (id || '')).sort(byOrder);
+const hasKids = (id) => sections.some(s => s.parentId === id);
+const secPathName = (s) => { const p = []; for (let x = s, n = 0; x && n < 20; x = sections.find(y => y.id === x.parentId), n++) p.unshift(x.name); return p.join(' › '); };
+const descendantsOf = (id) => { const out = []; const walk = (i) => sections.filter(s => s.parentId === i).forEach(s => { out.push(s); walk(s.id); }); walk(id); return out; };
+
+async function commitBatches(ops) {
+  for (let i = 0; i < ops.length; i += 400) {
+    const b = writeBatch(db);
+    ops.slice(i, i + 400).forEach(fn => fn(b));
+    await b.commit();
+  }
+}
+
+/* ================= RICH TEXT EDITOR ================= */
+const SW = ['#184D47', '#C64756', '#B8860B', '#1F5FA8', '#6B7280', '#111827'];
+const TOOLBAR = `
+<div class="ed-bar" role="toolbar" aria-label="লেখার টুলবার">
+  <div class="ed-grp">
+    <button type="button" data-c="undo" title="আনডু"><i class="fa-solid fa-rotate-left"></i></button>
+    <button type="button" data-c="redo" title="রিডু"><i class="fa-solid fa-rotate-right"></i></button>
+  </div>
+  <div class="ed-grp">
+    <select data-s="block" title="শিরোনাম">
+      <option value="p">সাধারণ লেখা</option><option value="h2">বড় শিরোনাম</option>
+      <option value="h3">মাঝারি শিরোনাম</option><option value="h4">ছোট শিরোনাম</option>
+    </select>
+    <select data-s="size" title="লেখার সাইজ">
+      <option value="">সাইজ</option><option value="2">ছোট</option><option value="3">সাধারণ</option>
+      <option value="5">বড়</option><option value="6">অনেক বড়</option>
+    </select>
+  </div>
+  <div class="ed-grp">
+    <button type="button" data-c="bold" title="বোল্ড (Ctrl+B)"><b class="tx">B</b></button>
+    <button type="button" data-c="italic" title="ইটালিক (Ctrl+I)"><i class="tx" style="font-style:italic;font-family:'Noto Serif Bengali',serif">I</i></button>
+    <button type="button" data-c="underline" title="আন্ডারলাইন (Ctrl+U)"><u class="tx">U</u></button>
+    <button type="button" data-c="strikeThrough" title="কাটা দাগ"><s class="tx">S</s></button>
+  </div>
+  <div class="ed-grp">
+    <label class="ed-color" title="লেখার রং"><i class="fa-solid fa-font"></i><input type="color" data-color="foreColor" value="#184D47"></label>
+    <label class="ed-color" title="হাইলাইট রং" style="--c:#FFE066"><i class="fa-solid fa-highlighter"></i><input type="color" data-color="hiliteColor" value="#FFE066"></label>
+    ${SW.map(c => `<button type="button" class="sw" data-sw="${c}" style="--sw:${c}" title="${c}"></button>`).join('')}
+  </div>
+  <div class="ed-grp">
+    <button type="button" data-c="justifyLeft" title="বামে"><i class="fa-solid fa-align-left"></i></button>
+    <button type="button" data-c="justifyCenter" title="মাঝে"><i class="fa-solid fa-align-center"></i></button>
+    <button type="button" data-c="justifyRight" title="ডানে"><i class="fa-solid fa-align-right"></i></button>
+    <button type="button" data-c="justifyFull" title="দুই পাশ সমান"><i class="fa-solid fa-align-justify"></i></button>
+  </div>
+  <div class="ed-grp">
+    <button type="button" data-c="insertUnorderedList" title="বুলেট তালিকা"><i class="fa-solid fa-list-ul"></i></button>
+    <button type="button" data-c="insertOrderedList" title="নম্বর তালিকা"><i class="fa-solid fa-list-ol"></i></button>
+    <button type="button" data-c="quote" title="উদ্ধৃতি"><i class="fa-solid fa-quote-left"></i></button>
+    <button type="button" data-c="hr" title="আলাদা দাগ"><i class="fa-solid fa-minus"></i></button>
+  </div>
+  <div class="ed-grp">
+    <button type="button" data-c="link" title="লিংক"><i class="fa-solid fa-link"></i></button>
+    <button type="button" data-c="unlink" title="লিংক মুছুন"><i class="fa-solid fa-link-slash"></i></button>
+    <button type="button" data-c="rtl" title="আরবি / ডান থেকে বাম"><b style="font-family:'Amiri',serif;font-size:1.05rem">ع</b></button>
+    <button type="button" data-c="removeFormat" title="ফরম্যাট মুছুন"><i class="fa-solid fa-eraser"></i></button>
+  </div>
+</div>`;
+const STATE_CMDS = ['bold', 'italic', 'underline', 'strikeThrough', 'insertUnorderedList', 'insertOrderedList',
+  'justifyLeft', 'justifyCenter', 'justifyRight', 'justifyFull'];
+const BLOCKS = 'p,div,li,h2,h3,h4,blockquote';
+
+function createEditor(host, { placeholder = 'এখানে লেখা বা নোট লিখুন...', minHeight = 200 } = {}) {
+  host.classList.add('ed');
+  host.innerHTML = TOOLBAR + `<div class="ed-area isl-rich is-empty" contenteditable="true" spellcheck="false" data-ph="${esc(placeholder)}" style="min-height:${minHeight}px"></div>`;
+  const area = host.querySelector('.ed-area');
+  let saved = null;
+
+  const inArea = (n) => !!n && area.contains(n.nodeType === 3 ? n.parentNode : n);
+  const saveSel = () => { const s = getSelection(); if (s.rangeCount && inArea(s.anchorNode)) saved = s.getRangeAt(0).cloneRange(); };
+  const restoreSel = () => {
+    area.focus();
+    if (saved) { const s = getSelection(); s.removeAllRanges(); s.addRange(saved); }
+  };
+  const hasContent = () => area.textContent.trim() !== '' || !!area.querySelector('hr,ul,ol');
+  const syncEmpty = () => area.classList.toggle('is-empty', !hasContent());
+
+  function refresh() {
+    if (!inArea(getSelection().anchorNode)) return;
+    STATE_CMDS.forEach(c => {
+      const b = host.querySelector(`[data-c="${c}"]`); if (!b) return;
+      let on = false; try { on = document.queryCommandState(c); } catch (e) { /* ignore */ }
+      b.classList.toggle('on', on);
+    });
+    let blk = ''; try { blk = (document.queryCommandValue('formatBlock') || '').toLowerCase().replace(/[<>]/g, ''); } catch (e) { /* ignore */ }
+    host.querySelector('[data-s=block]').value = ['h2', 'h3', 'h4'].includes(blk) ? blk : 'p';
+    host.querySelector('[data-c=quote]').classList.toggle('on', blk === 'blockquote');
+  }
+  const exec = (cmd, val = null) => {
+    restoreSel();
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand('defaultParagraphSeparator', false, 'p');
+    document.execCommand(cmd, false, val);
+    saveSel(); refresh(); syncEmpty();
+  };
+
+  function toggleDir() {
+    restoreSel();
+    const sel = getSelection(); if (!sel.rangeCount) return;
+    if (!area.querySelector(BLOCKS)) document.execCommand('formatBlock', false, '<p>');
+    const range = sel.getRangeAt(0);
+    let blocks = [...area.querySelectorAll(BLOCKS)].filter(el => range.intersectsNode(el) && !el.querySelector(BLOCKS));
+    if (!blocks.length) {
+      document.execCommand('formatBlock', false, '<p>');
+      blocks = [...area.querySelectorAll(BLOCKS)].filter(el => getSelection().getRangeAt(0).intersectsNode(el) && !el.querySelector(BLOCKS));
+    }
+    if (!blocks.length) return;
+    const toRtl = blocks.some(b => b.getAttribute('dir') !== 'rtl');
+    blocks.forEach(b => toRtl ? b.setAttribute('dir', 'rtl') : b.removeAttribute('dir'));
+    saveSel(); syncEmpty();
+  }
+  function addLink() {
+    restoreSel();
+    const sel = getSelection();
+    if (!sel.rangeCount || sel.isCollapsed) { toast('যে লেখায় লিংক দিতে চান আগে সেটি সিলেক্ট করুন', 'info'); return; }
+    let url = (prompt('লিংক দিন (যেমন https://example.com)') || '').trim();
+    if (!url) return;
+    if (!/^(https?:\/\/|mailto:|tel:)/i.test(url)) url = 'https://' + url;
+    exec('createLink', url);
+  }
+  function toggleQuote() {
+    let blk = ''; try { blk = (document.queryCommandValue('formatBlock') || '').toLowerCase().replace(/[<>]/g, ''); } catch (e) { /* ignore */ }
+    exec('formatBlock', blk === 'blockquote' ? '<p>' : '<blockquote>');
+  }
+
+  host.addEventListener('mousedown', (e) => { if (e.target.closest('.ed-bar button')) e.preventDefault(); });
+  host.addEventListener('click', (e) => {
+    const sw = e.target.closest('[data-sw]');
+    if (sw) { exec('foreColor', sw.dataset.sw); return; }
+    const b = e.target.closest('[data-c]'); if (!b) return;
+    const c = b.dataset.c;
+    if (c === 'link') addLink();
+    else if (c === 'rtl') toggleDir();
+    else if (c === 'quote') toggleQuote();
+    else if (c === 'hr') exec('insertHorizontalRule');
+    else exec(c);
+  });
+  host.addEventListener('change', (e) => {
+    const s = e.target.closest('[data-s]');
+    if (s) {
+      if (s.dataset.s === 'block') exec('formatBlock', '<' + s.value + '>');
+      else if (s.dataset.s === 'size' && s.value) { exec('fontSize', s.value); s.value = ''; }
+      return;
+    }
+    const col = e.target.closest('[data-color]');
+    if (col) {
+      exec(col.dataset.color, col.value);
+      col.parentElement.style.setProperty('--c', col.value);
+    }
+  });
+  area.addEventListener('input', () => { syncEmpty(); saveSel(); });
+  area.addEventListener('keyup', () => { saveSel(); refresh(); });
+  area.addEventListener('mouseup', () => { saveSel(); refresh(); });
+  area.addEventListener('focus', () => {
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand('defaultParagraphSeparator', false, 'p');
+  });
+  document.addEventListener('selectionchange', () => { if (inArea(getSelection().anchorNode)) { saveSel(); refresh(); } });
+
+  // paste — bairer kharap style/script chole ashte dey na
+  area.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const cd = e.clipboardData; if (!cd) return;
+    const html = cd.getData('text/html'), text = cd.getData('text/plain');
+    const ins = html ? cleanHtml(html) : esc(text).replace(/\r?\n/g, '<br>');
+    document.execCommand('insertHTML', false, ins);
+    syncEmpty();
+  });
+
+  return {
+    getHtml() { const h = cleanHtml(area.innerHTML).trim(); return hasContent() ? h : ''; },
+    getText() { return (area.innerText || area.textContent || '').trim(); },
+    setHtml(h) { area.innerHTML = cleanHtml(h) || ''; saved = null; syncEmpty(); },
+    clear() { area.innerHTML = ''; saved = null; syncEmpty(); },
+    focus() { area.focus(); }
+  };
+}
+const addEditor = createEditor($('subEditorHost'), { minHeight: 200 });
+const editEditor = createEditor($('editSubEditorHost'), { minHeight: 280 });
+
+/* ================= load ================= */
+async function loadAll() {
+  const [hs, ss, bs, st, us, rs] = await Promise.all([
+    getDocs(collection(db, 'home_buttons')),
+    getDocs(collection(db, 'section_buttons')),
+    getDocs(collection(db, 'sub_buttons')),
+    getDoc(doc(db, 'settings', 'main')).catch(() => null),
+    getDocs(collection(db, 'users')).catch(() => ({ docs: [] })),
+    getDocs(collection(db, 'reads')).catch(() => ({ docs: [] }))
+  ]);
+  users = us.docs.map(d => ({ id: d.id, ...d.data() }));
+  reads = rs.docs.map(d => d.data());
+  homes = hs.docs.map(d => ({ id: d.id, ...d.data() })).sort(byOrder);
+  sections = ss.docs.map(d => ({ id: d.id, ...d.data() })).sort(byOrder);
+  subs = bs.docs.map(d => ({ id: d.id, ...d.data() })).sort(byOrder);
+  if (st && st.exists()) { $('s_siteName').value = st.data().siteName || ''; $('s_subtitle').value = st.data().subtitle || ''; palLoad(st.data()); } else palLoad({});
+  labWork = {}; LABELS.forEach(l => { const v = st && st.exists() && st.data().labels ? st.data().labels[l.k] : ''; labWork[l.k] = v || l.d; });
+  renderAll();
+}
+let labWork = {};
+function renderAll() {
+  renderOverview(); renderHomes(); renderSecHomeSelect(); renderSections();
+  renderSubSelects(); renderSubs(); updatePreviews(); renderUsers(); renderLabels();
+}
+
+/* ================= overview ================= */
+function renderOverview() {
+  $('statHomes').textContent = homes.length;
+  $('statSections').textContent = sections.length;
+  $('statSubs').textContent = subs.length;
+  $('statNotes').textContent = subs.filter(s => (s.noteHtml || s.note || '').trim()).length;
+  $('navHomes').textContent = homes.length;
+  $('navSections').textContent = sections.length;
+  $('navSubs').textContent = subs.length;
+
+  if (!homes.length) { $('distList').innerHTML = emptyBox('fa-grip', 'এখনো কোনো হোম বাটন নেই', '"হোম বাটন" মেনু থেকে প্রথম বাটন যোগ করুন।'); return; }
+  const max = Math.max(1, ...homes.map(h => secsOf(h.id).length));
+  $('distList').innerHTML = homes.map(h => {
+    const c = secsOf(h.id).length;
+    return '<button class="dist-row" data-home="' + esc(h.id) + '"><span class="dist-name">' + esc(h.name) + '</span>' +
+      '<span class="bar-track"><span class="bar-fill" style="width:' + Math.round(c / max * 100) + '%"></span></span><b>' + c + '</b></button>';
+  }).join('');
+}
+$('distList').addEventListener('click', (e) => {
+  const row = e.target.closest('.dist-row'); if (!row) return;
+  $('secHomeSelect').value = row.dataset.home; secCur = ''; renderSections(); updatePreviews();
+  window.islShowView('sections');
+});
+
+/* ================= reorder (shared) ================= */
+async function moveItem(list, idx, dir, col) {
+  const j = idx + dir;
+  if (j < 0 || j >= list.length) return;
+  const arr = list.slice();
+  [arr[idx], arr[j]] = [arr[j], arr[idx]];
+  try {
+    const ops = [];
+    arr.forEach((it, k) => { if (it.order !== k + 1) ops.push((b) => b.update(doc(db, col, it.id), { order: k + 1 })); });
+    if (ops.length) await commitBatches(ops);
+    arr.forEach((it, k) => { it.order = k + 1; });
+    homes.sort(byOrder); sections.sort(byOrder); subs.sort(byOrder);
+    renderAll();
+  } catch (err) {
+    console.error(err); toast('ক্রম বদলাতে ব্যর্থ: ' + (err.message || err), 'error'); loadAll();
+  }
+}
+const actionBtns = (i, n, extra = '') =>
+  extra +
+  '<button data-act="up" title="উপরে" ' + (i === 0 ? 'disabled' : '') + '><i class="fa-solid fa-arrow-up"></i></button>' +
+  '<button data-act="down" title="নিচে" ' + (i === n - 1 ? 'disabled' : '') + '><i class="fa-solid fa-arrow-down"></i></button>' +
+  '<button data-act="edit" title="এডিট"><i class="fa-solid fa-pen"></i></button>' +
+  '<button data-act="del" class="danger" title="মুছুন"><i class="fa-solid fa-trash"></i></button>';
+
+/* ================= HOME BUTTONS ================= */
+function renderHomes() {
+  const box = $('homesList');
+  if (!homes.length) { box.innerHTML = emptyBox('fa-grip', 'কোনো হোম বাটন নেই', 'পাশের ফর্ম থেকে প্রথম বাটন যোগ করুন।'); return; }
+  box.innerHTML = homes.map((h, i) => {
+    const c = secsOf(h.id).length;
+    return '<div class="item"><div class="item-num">' + (i + 1) + '</div>' +
+      '<div class="item-main"><b>' + esc(h.name) + '</b><span>' + c + ' টি সেকশন বাটন</span></div>' +
+      '<div class="item-actions" data-id="' + esc(h.id) + '" data-idx="' + i + '">' +
+      actionBtns(i, homes.length, '<button data-act="open" title="সেকশন বাটন দেখুন"><i class="fa-solid fa-list-ul"></i></button>') + '</div></div>';
+  }).join('');
+}
+$('homesList').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-act]'); if (!btn) return;
+  const wrap = btn.closest('.item-actions');
+  const id = wrap.dataset.id, idx = Number(wrap.dataset.idx), act = btn.dataset.act;
+  const h = homes.find(x => x.id === id); if (!h) return;
+  if (act === 'up') moveItem(homes, idx, -1, 'home_buttons');
+  else if (act === 'down') moveItem(homes, idx, 1, 'home_buttons');
+  else if (act === 'open') { $('secHomeSelect').value = id; secCur = ''; renderSections(); updatePreviews(); window.islShowView('sections'); }
+  else if (act === 'edit') { $('editHomeId').value = id; $('editHomeName').value = h.name || ''; openModal('editHomeModal'); $('editHomeName').focus(); }
+  else if (act === 'del') {
+    const sc = secsOf(id), bc = subs.filter(s => sc.some(x => x.id === s.sectionId)).length;
+    askConfirm('"' + h.name + '" বাটন' + (sc.length ? ', এর ' + sc.length + 'টি সেকশন' : '') + (bc ? ' ও ' + bc + 'টি নম্বর বাটন' : '') + ' স্থায়ীভাবে মুছে যাবে। এই কাজ ফেরানো যাবে না।', () => deleteHome(id));
+  }
+});
+$('homeForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = $('homeName').value.trim(); if (!name) return;
+  busy($('homeAddBtn'), 'যোগ হচ্ছে...', async () => {
+    const order = homes.reduce((m, h) => Math.max(m, h.order || 0), 0) + 1;
+    const ref = await addDoc(collection(db, 'home_buttons'), { name, order, createdAt: serverTimestamp() });
+    homes.push({ id: ref.id, name, order });
+    $('homeName').value = '';
+    renderAll();
+    toast('হোম বাটন যোগ হয়েছে', 'success');
+  });
+});
+$('homeName').addEventListener('input', updatePreviews);
+$('editHomeSave').addEventListener('click', () => {
+  const id = $('editHomeId').value, name = $('editHomeName').value.trim();
+  if (!name) { toast('নাম খালি রাখা যাবে না', 'error'); return; }
+  busy($('editHomeSave'), 'সেভ হচ্ছে...', async () => {
+    await updateDoc(doc(db, 'home_buttons', id), { name });
+    const h = homes.find(x => x.id === id); if (h) h.name = name;
+    closeModal('editHomeModal'); renderAll(); toast('আপডেট হয়েছে', 'success');
+  });
+});
+async function deleteHome(id) {
+  try {
+    const secIds = new Set(secsOf(id).map(s => s.id));
+    const delSubs = subs.filter(s => secIds.has(s.sectionId) || s.homeId === id);
+    const refs = [doc(db, 'home_buttons', id), ...[...secIds].map(x => doc(db, 'section_buttons', x)), ...delSubs.map(s => doc(db, 'sub_buttons', s.id))];
+    await commitBatches(refs.map(r => (b) => b.delete(r)));
+    homes = homes.filter(h => h.id !== id);
+    sections = sections.filter(s => s.homeId !== id);
+    subs = subs.filter(s => !delSubs.includes(s));
+    renderAll(); toast('মুছে ফেলা হয়েছে', 'success');
+  } catch (err) { console.error(err); toast('ত্রুটি: ' + (err.message || err), 'error'); }
+}
+
+/* ================= SECTION BUTTONS ================= */
+const homeOptions = (cur) => homes.length
+  ? homes.map(h => '<option value="' + esc(h.id) + '">' + esc(h.name) + '</option>').join('')
+  : '<option value="">— আগে একটি হোম বাটন তৈরি করুন —</option>';
+function renderSecHomeSelect() {
+  const sel = $('secHomeSelect'), cur = sel.value;
+  sel.innerHTML = homeOptions();
+  if (homes.some(h => h.id === cur)) sel.value = cur;
+}
+function renderSections() {
+  const hid = $('secHomeSelect').value, box = $('secList');
+  if (!hid) { $('secCrumbs').innerHTML = ''; $('secCountHint').textContent = '—'; box.innerHTML = emptyBox('fa-grip', 'কোনো হোম বাটন নেই', 'প্রথমে "হোম বাটন" মেনু থেকে একটি বাটন তৈরি করুন।'); return; }
+  if (secCur && !sections.some(x => x.id === secCur && x.homeId === hid)) secCur = '';
+  const home = homes.find(h => h.id === hid);
+  // breadcrumb: home button > folder > folder ...
+  const trail = []; for (let x = sections.find(y => y.id === secCur), n = 0; x && n < 20; x = sections.find(y => y.id === x.parentId), n++) trail.unshift(x);
+  $('secCrumbs').innerHTML = '<button type="button" data-go="" class="' + (secCur ? '' : 'cur') + '"><i class="fa-solid fa-grip"></i> ' + esc(home ? home.name : '') + '</button>' +
+    trail.map(t => '<i class="fa-solid fa-chevron-right"></i><button type="button" data-go="' + esc(t.id) + '" class="' + (t.id === secCur ? 'cur' : '') + '">' + esc(t.name) + '</button>').join('');
+  const here = secCur ? trail[trail.length - 1].name : (home ? home.name : '');
+  const hasNotes = secCur && subsOf(secCur).length > 0;
+  $('secFormTitle').textContent = 'নতুন সেকশন বাটন';
+  $('secFormHint').innerHTML = hasNotes ? '<b style="color:var(--red)">এই ফোল্ডারে নম্বর বাটন (নোট) আছে, তাই এখানে সেকশন বাটন যোগ করা যাবে না।</b>' : 'যোগ হবে: <b>' + esc(here) + '</b> এর ভেতরে। শুধু নাম লিখুন।';
+  $('secAddBtn').disabled = !!hasNotes;
+  const list = kidsOf(secCur, hid);
+  $('secListTitle').textContent = '"' + here + '" এর ভেতরের সেকশন বাটন';
+  $('secCountHint').textContent = 'মোট ' + list.length + 'টি';
+  if (!list.length) { box.innerHTML = emptyBox('fa-layer-group', 'কোনো সেকশন বাটন নেই', 'পাশের ফর্ম থেকে প্রথম বাটন যোগ করুন।'); return; }
+  box.innerHTML = list.map((s, i) => {
+    const k = sections.filter(x => x.parentId === s.id).length, c = subsOf(s.id).length;
+    const meta = k ? k + ' টি সেকশন বাটন ভেতরে' : (c ? c + ' টি নম্বর বাটন ভেতরে' : 'ভেতরে এখনো কিছু নেই');
+    return '<div class="item"><div class="item-num">' + (i + 1) + '</div>' +
+      '<div class="item-main"><b>' + esc(s.name) + '</b><span>' + meta + '</span></div>' +
+      '<div class="item-actions" data-id="' + esc(s.id) + '" data-idx="' + i + '">' +
+      actionBtns(i, list.length,
+        '<button data-act="enter" title="ভেতরে সেকশন বাটন যোগ করুন / দেখুন"' + (c ? ' disabled' : '') + '><i class="fa-solid fa-folder-open"></i></button>' +
+        '<button data-act="open" title="নম্বর বাটন ও নোট যোগ করুন / দেখুন"' + (k ? ' disabled' : '') + '><i class="fa-solid fa-list-ol"></i></button>') + '</div></div>';
+  }).join('');
+}
+$('secCrumbs').addEventListener('click', (e) => { const b = e.target.closest('button[data-go]'); if (!b) return; secCur = b.dataset.go; renderSections(); updatePreviews(); });
+$('secHomeSelect').addEventListener('change', () => { secCur = ''; renderSections(); updatePreviews(); });
+$('secName').addEventListener('input', updatePreviews);
+$('secList').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-act]'); if (!btn) return;
+  const wrap = btn.closest('.item-actions');
+  const id = wrap.dataset.id, idx = Number(wrap.dataset.idx), act = btn.dataset.act;
+  const s = sections.find(x => x.id === id); if (!s) return;
+  if (act === 'up') moveItem(kidsOf(secCur, s.homeId), idx, -1, 'section_buttons');
+  else if (act === 'down') moveItem(kidsOf(secCur, s.homeId), idx, 1, 'section_buttons');
+  else if (act === 'enter') { secCur = id; renderSections(); updatePreviews(); window.scrollTo(0, 0); }
+  else if (act === 'open') { $('subHomeSelect').value = s.homeId; renderSubSelects(); $('subSecSelect').value = id; renderSubs(); updatePreviews(); window.islShowView('subs'); }
+  else if (act === 'edit') { $('editSecId').value = id; $('editSecName').value = s.name || ''; openModal('editSecModal'); $('editSecName').focus(); }
+  else if (act === 'del') {
+    const ds = descendantsOf(id), ids = new Set([id, ...ds.map(x => x.id)]), ns = subs.filter(x => ids.has(x.sectionId));
+    askConfirm('"' + s.name + '" সেকশন' + (ds.length ? ', এর ভেতরের ' + ds.length + 'টি সেকশন বাটন' : '') + (ns.length ? ' ও ' + ns.length + 'টি নম্বর বাটন' : '') + ' স্থায়ীভাবে মুছে যাবে। এই কাজ ফেরানো যাবে না।', async () => {
+      try {
+        const refs = [...[...ids].map(x => doc(db, 'section_buttons', x)), ...ns.map(x => doc(db, 'sub_buttons', x.id))];
+        await commitBatches(refs.map(r => (b) => b.delete(r)));
+        subs = subs.filter(x => !ids.has(x.sectionId)); sections = sections.filter(x => !ids.has(x.id));
+        renderAll(); toast('মুছে ফেলা হয়েছে', 'success');
+      } catch (err) { console.error(err); toast('ত্রুটি: ' + (err.message || err), 'error'); }
+    });
+  }
+});
+$('secForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const homeId = $('secHomeSelect').value;
+  if (!homeId) { toast('আগে একটি হোম বাটন বাছাই করুন', 'error'); return; }
+  if (secCur && subsOf(secCur).length) { toast('এই সেকশনে নম্বর বাটন আছে — সেকশন বাটন যোগ করা যাবে না', 'error'); return; }
+  const name = $('secName').value.trim(); if (!name) return;
+  const parentId = secCur;
+  busy($('secAddBtn'), 'যোগ হচ্ছে...', async () => {
+    const order = kidsOf(parentId, homeId).reduce((m, s) => Math.max(m, s.order || 0), 0) + 1;
+    const ref = await addDoc(collection(db, 'section_buttons'), { homeId, parentId, name, order, createdAt: serverTimestamp() });
+    sections.push({ id: ref.id, homeId, parentId, name, order });
+    $('secName').value = ''; renderAll(); toast('সেকশন বাটন যোগ হয়েছে', 'success');
+  });
+});
+$('editSecSave').addEventListener('click', () => {
+  const id = $('editSecId').value, name = $('editSecName').value.trim();
+  if (!name) { toast('নাম খালি রাখা যাবে না', 'error'); return; }
+  busy($('editSecSave'), 'সেভ হচ্ছে...', async () => {
+    await updateDoc(doc(db, 'section_buttons', id), { name });
+    const s = sections.find(x => x.id === id); if (s) s.name = name;
+    closeModal('editSecModal'); renderAll(); toast('আপডেট হয়েছে', 'success');
+  });
+});
+
+/* ================= NUMBER BUTTONS + NOTES ================= */
+function renderSubSelects() {
+  const hs = $('subHomeSelect'), ss = $('subSecSelect'), curH = hs.value, curS = ss.value;
+  hs.innerHTML = homeOptions();
+  if (homes.some(h => h.id === curH)) hs.value = curH;
+  const secs = secsOf(hs.value).filter(x => !hasKids(x.id));
+  ss.innerHTML = secs.length
+    ? secs.map(s => '<option value="' + esc(s.id) + '">' + esc(secPathName(s)) + '</option>').join('')
+    : '<option value="">— আগে একটি সেকশন বাটন তৈরি করুন (যেটার ভেতরে আর সেকশন নেই) —</option>';
+  if (secs.some(s => s.id === curS)) ss.value = curS;
+}
+function renderSubs() {
+  const sid = $('subSecSelect').value, box = $('subsList');
+  if (!sid) { $('subCountHint').textContent = '—'; box.innerHTML = emptyBox('fa-layer-group', 'কোনো সেকশন বাটন নেই', 'প্রথমে "সেকশন বাটন" মেনু থেকে একটি বাটন তৈরি করুন।'); return; }
+  const list = subsOf(sid);
+  $('subCountHint').textContent = 'মোট ' + list.length + 'টি নম্বর বাটন';
+  if (!list.length) { box.innerHTML = emptyBox('fa-list-ol', 'কোনো নম্বর বাটন নেই', 'পাশের ফর্ম থেকে প্রথম বাটন যোগ করুন।'); return; }
+  box.innerHTML = list.map((s, i) => {
+    const ex = (s.note || plainText(s.noteHtml || '')).replace(/\s+/g, ' ').trim();
+    return '<div class="item"><div class="item-num">' + (i + 1) + '</div>' +
+      '<div class="item-main"><b>' + esc(s.name) + '</b><span>' + (ex ? esc(ex.slice(0, 70)) : 'কোনো লেখা নেই') + '</span></div>' +
+      '<div class="item-actions" data-id="' + esc(s.id) + '" data-idx="' + i + '">' + actionBtns(i, list.length) + '</div></div>';
+  }).join('');
+}
+$('subHomeSelect').addEventListener('change', () => { renderSubSelects(); renderSubs(); updatePreviews(); });
+$('subSecSelect').addEventListener('change', () => { renderSubs(); updatePreviews(); });
+$('subName').addEventListener('input', updatePreviews);
+
+$('subsList').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-act]'); if (!btn) return;
+  const wrap = btn.closest('.item-actions');
+  const id = wrap.dataset.id, idx = Number(wrap.dataset.idx), act = btn.dataset.act;
+  const s = subs.find(x => x.id === id); if (!s) return;
+  if (act === 'up') moveItem(subsOf(s.sectionId), idx, -1, 'sub_buttons');
+  else if (act === 'down') moveItem(subsOf(s.sectionId), idx, 1, 'sub_buttons');
+  else if (act === 'edit') {
+    $('editSubId').value = id; $('editSubName').value = s.name || '';
+    editEditor.setHtml(s.noteHtml ? s.noteHtml : textToHtml(s.note || '').replace(/^<p><br><\/p>$/, ''));
+    openModal('editSubModal'); $('editSubName').focus();
+  } else if (act === 'del') {
+    askConfirm('"' + s.name + '" নম্বর বাটন স্থায়ীভাবে মুছে যাবে। এই কাজ ফেরানো যাবে না।', async () => {
+      try {
+        await commitBatches([(b) => b.delete(doc(db, 'sub_buttons', id))]);
+        subs = subs.filter(x => x.id !== id); renderAll(); toast('মুছে ফেলা হয়েছে', 'success');
+      } catch (err) { console.error(err); toast('ত্রুটি: ' + (err.message || err), 'error'); }
+    });
+  }
+});
+$('subForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const sectionId = $('subSecSelect').value, homeId = $('subHomeSelect').value;
+  if (!sectionId) { toast('আগে একটি সেকশন বাটন বাছাই করুন', 'error'); return; }
+  const name = $('subName').value.trim(); if (!name) return;
+  const noteHtml = addEditor.getHtml(), note = addEditor.getText();
+  busy($('subAddBtn'), 'যোগ হচ্ছে...', async () => {
+    const order = subsOf(sectionId).reduce((m, s) => Math.max(m, s.order || 0), 0) + 1;
+    const ref = await addDoc(collection(db, 'sub_buttons'), { homeId, sectionId, name, noteHtml, note, order, createdAt: serverTimestamp() });
+    subs.push({ id: ref.id, homeId, sectionId, name, noteHtml, note, order });
+    $('subName').value = ''; addEditor.clear();
+    renderAll(); toast('নম্বর বাটন যোগ হয়েছে', 'success');
+  });
+});
+$('editSubSave').addEventListener('click', () => {
+  const id = $('editSubId').value, name = $('editSubName').value.trim();
+  if (!name) { toast('নাম খালি রাখা যাবে না', 'error'); return; }
+  const noteHtml = editEditor.getHtml(), note = editEditor.getText();
+  busy($('editSubSave'), 'সেভ হচ্ছে...', async () => {
+    await updateDoc(doc(db, 'sub_buttons', id), { name, noteHtml, note });
+    const s = subs.find(x => x.id === id); if (s) { s.name = name; s.noteHtml = noteHtml; s.note = note; }
+    closeModal('editSubModal'); renderAll(); toast('আপডেট হয়েছে', 'success');
+  });
+});
+
+/* ================= live previews (asol button design diye) ================= */
+function updatePreviews() {
+  $('homePreview').innerHTML = homeBtnHtml({ label: $('homeName').value.trim() || 'বাটনের নাম', href: '#' });
+  $('secPreview').innerHTML = btnHtml({ label: $('secName').value.trim() || 'বাটনের নাম', href: '#', kind: secDepth() });
+  const n = subsOf($('subSecSelect').value).length + 1;
+  $('subPreview').innerHTML = btnHtml({ label: $('subName').value.trim() || 'বাটনের নাম', href: '#', num: n });
+}
+
+/* ================= settings ================= */
+$('settingsForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  busy($('settingsBtn'), 'সেভ হচ্ছে...', async () => {
+    await setDoc(doc(db, 'settings', 'main'), { siteName: $('s_siteName').value.trim(), subtitle: $('s_subtitle').value.trim() }, { merge: true });
+    try { sessionStorage.removeItem(SITE_KEY); } catch (er) { /* ignore */ }
+    toast('সেটিংস সেভ হয়েছে', 'success');
+  });
+});
+
+
+/* ================= colour combinations ================= */
+let palBoxes = [], palId = '', palAuto = { on: false, start: 0, idx0: 0 };
+const palHex = (c) => /^#[0-9a-f]{6}$/i.test(c);
+const sw = (c) => '<span class="pal-sw">' + c.map(x => '<i style="background:' + esc(x) + '"></i>').join('') + '</span>';
+function palLoad(d) {
+  palBoxes = Array.isArray(d.paletteBoxes) ? d.paletteBoxes.filter(b => b && Array.isArray(b.c) && b.c.length === 4 && b.c.every(palHex)) : DEFAULT_PALETTES.map(b => ({ id: b.id, c: [...b.c] }));
+  palId = d.paletteId || (Array.isArray(d.palette) ? '' : palBoxes[0] ? palBoxes[0].id : '');
+  palAuto = { on: !!d.paletteAuto, start: d.paletteAutoStart || 0, idx0: d.paletteAutoIdx || 0 };
+  if (palAuto.on && palBoxes.length) { const ap = autoPalette({ paletteAuto: true, paletteBoxes: palBoxes, paletteAutoStart: palAuto.start, paletteAutoIdx: palAuto.idx0 }); const bx = palBoxes.find(b => b.c === ap); if (bx) palId = bx.id; }
+  renderPal();
+}
+function renderPal() {
+  $('palAuto').checked = palAuto.on;
+  $('palAutoNote').textContent = palAuto.on ? 'চালু আছে — ২৪ ঘণ্টা পর পর পরের বক্সের রং আসবে। কোনো বক্সে ক্লিক করলে সেটা থেকেই আবার ২৪ ঘণ্টা গণনা শুরু হবে।' : 'চালু করলে নিচের বক্সগুলো থেকে একটার পর একটা রং প্রতিদিন সাইটে ও অ্যাডমিনে বসবে।';
+  $('palCount').textContent = palBoxes.length;
+  $('palGrid').innerHTML = palBoxes.length ? palBoxes.map(b =>
+    '<div class="pal-box' + (b.id === palId ? ' on' : '') + '" data-id="' + esc(b.id) + '" role="button" tabindex="0" title="এই রংগুলো ব্যবহার করুন">' + sw(b.c) +
+    '<span class="pal-cap">' + (b.id === palId ? '<i class="fa-solid fa-circle-check"></i> চালু আছে' : 'ক্লিক করে চালু করুন') + '</span>' +
+    '<button type="button" class="pal-x" data-del="' + esc(b.id) + '" aria-label="মুছুন" title="এই বক্স মুছুন"><i class="fa-solid fa-xmark"></i></button></div>').join('')
+    : emptyBox('fa-palette', 'কোনো বক্স নেই', 'নিচে থেকে নিজের কম্বিনেশন বানান বা ডিফল্ট ফিরিয়ে আনুন');
+}
+async function palSave(extra) {
+  await setDoc(doc(db, 'settings', 'main'), Object.assign({ paletteBoxes: palBoxes, paletteAuto: palAuto.on, paletteAutoStart: palAuto.start, paletteAutoIdx: palAuto.idx0 }, extra || {}), { merge: true });
+  try { sessionStorage.removeItem(SITE_KEY); } catch (er) { /* ignore */ }
+}
+$('palGrid').addEventListener('click', async (e) => {
+  const del = e.target.closest('[data-del]');
+  if (del) {
+    e.stopPropagation(); const id = del.dataset.del;
+    return askConfirm('এই রঙের বক্সটি মুছে ফেলবেন?', async () => {
+      palBoxes = palBoxes.filter(b => b.id !== id); if (palId === id) palId = ''; renderPal();
+      try { await palSave({ paletteId: palId }); toast('বক্স মুছে ফেলা হয়েছে', 'success'); } catch (er) { toast('সেভ হয়নি: ' + (er.message || er), 'error'); }
+    });
+  }
+  const box = e.target.closest('.pal-box'); if (!box) return;
+  const b = palBoxes.find(x => x.id === box.dataset.id); if (!b) return;
+  palId = b.id; applyPalette(b.c); palAuto.start = Date.now(); palAuto.idx0 = palBoxes.indexOf(b); renderPal();
+  try { await palSave({ paletteId: b.id, palette: b.c }); toast('রং বদলানো হয়েছে', 'success'); } catch (er) { toast('সেভ হয়নি: ' + (er.message || er), 'error'); }
+});
+$('palAuto').addEventListener('change', async () => {
+  palAuto.on = $('palAuto').checked; palAuto.start = Date.now(); palAuto.idx0 = Math.max(0, palBoxes.findIndex(b => b.id === palId)); renderPal();
+  try { await palSave(); toast(palAuto.on ? 'প্রতি ২৪ ঘণ্টায় রং বদলানো চালু হয়েছে' : 'অটো রং বদল বন্ধ হয়েছে', 'success'); } catch (er) { toast('সেভ হয়নি', 'error'); }
+});
+const palCur = () => [0, 1, 2, 3].map(i => $('palIn' + i).value);
+const palLive = () => { $('palLive').innerHTML = palCur().map(x => '<i style="background:' + esc(x) + '"></i>').join(''); };
+[0, 1, 2, 3].forEach(i => $('palIn' + i).addEventListener('input', palLive)); palLive();
+$('palAdd').addEventListener('click', () => busy($('palAdd'), 'যোগ হচ্ছে...', async () => {
+  const c = palCur(); if (!c.every(palHex)) return toast('৪টি রংই বেছে নিন', 'error');
+  palBoxes.push({ id: 'c' + Date.now().toString(36), c }); renderPal();
+  await palSave(); toast('নতুন বক্স যোগ হয়েছে — ক্লিক করে চালু করুন', 'success');
+}));
+$('palReset').addEventListener('click', () => askConfirm('সব বক্স মুছে ডিফল্ট ৫টি বক্স ফিরিয়ে আনবেন? (এখন চালু থাকা রং বদলাবে না)', async () => {
+  palBoxes = DEFAULT_PALETTES.map(b => ({ id: b.id, c: [...b.c] })); renderPal();
+  try { await palSave(); toast('ডিফল্ট বক্স ফিরে এসেছে', 'success'); } catch (er) { toast('সেভ হয়নি', 'error'); }
+}, '<i class="fa-solid fa-rotate-left"></i> হ্যাঁ, ফিরিয়ে আনুন'));
+
+/* ================= labels: every text of the site ================= */
+function renderLabels() {
+  const q = ($('labSearch').value || '').trim().toLowerCase();
+  const gname = Object.fromEntries(LABEL_GROUPS);
+  const html = LABEL_GROUPS.map(([g, title]) => {
+    const rows = LABELS.filter(l => l.g === g && (!q || (l.t + ' ' + l.w + ' ' + l.d + ' ' + title + ' ' + (labWork[l.k] || '')).toLowerCase().includes(q)));
+    if (!rows.length) return '';
+    return '<div class="card lab-group"><h3><i class="fa-solid fa-table-columns"></i> ' + esc(title) + '</h3>' + rows.map(l =>
+      '<div class="lab-row' + ((labWork[l.k] || '') !== l.d ? ' changed' : '') + '" data-k="' + l.k + '"><label>' + esc(l.t) + ' <span class="tag">' + esc(gname[l.g]) + '</span></label>' +
+      '<div class="ctl"><input type="text" maxlength="120" data-k="' + l.k + '" value="' + esc(labWork[l.k] != null ? labWork[l.k] : l.d) + '" placeholder="' + esc(l.d) + '">' +
+      '<button type="button" data-reset="' + l.k + '" title="আগের (ডিফল্ট) লেখা ফিরিয়ে আনুন"><i class="fa-solid fa-rotate-left"></i></button></div>' +
+      '<span class="where"><i class="fa-solid fa-location-dot"></i> ' + esc(l.w) + '</span><span class="def">ডিফল্ট লেখা: ' + esc(l.d) + '</span></div>').join('') + '</div>';
+  }).join('');
+  $('labList').innerHTML = html || emptyBox('fa-magnifying-glass', 'কিছু পাওয়া যায়নি', 'অন্য শব্দ দিয়ে খুঁজুন।');
+}
+$('labSearch').addEventListener('input', renderLabels);
+$('labList').addEventListener('input', (e) => {
+  const inp = e.target.closest('input[data-k]'); if (!inp) return;
+  const l = LABELS.find(x => x.k === inp.dataset.k); labWork[l.k] = inp.value;
+  inp.closest('.lab-row').classList.toggle('changed', inp.value !== l.d);
+});
+$('labList').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-reset]'); if (!b) return;
+  const l = LABELS.find(x => x.k === b.dataset.reset); labWork[l.k] = l.d; renderLabels();
+});
+$('labReset').addEventListener('click', () => askConfirm('সব লেখা আগের (ডিফল্ট) লেখায় ফিরে যাবে। সেভ করলে তবেই সাইটে বদলাবে। এগিয়ে যাবেন?', async () => { LABELS.forEach(l => { labWork[l.k] = l.d; }); renderLabels(); toast('ডিফল্ট বসানো হয়েছে — সেভ করুন', 'info'); }, '<i class="fa-solid fa-rotate-left"></i> হ্যাঁ, ডিফল্টে ফেরান'));
+$('labSave').addEventListener('click', () => busy($('labSave'), 'সেভ হচ্ছে...', async () => {
+  const out = {};
+  LABELS.forEach(l => { const v = String(labWork[l.k] != null ? labWork[l.k] : '').trim(); if (v && v !== l.d) out[l.k] = v; });
+  try { await updateDoc(doc(db, 'settings', 'main'), { labels: out }); } catch (e) { await setDoc(doc(db, 'settings', 'main'), { labels: out }, { merge: true }); }
+  try { sessionStorage.removeItem(SITE_KEY); } catch (er) { /* ignore */ }
+  toast('লেখাগুলো সেভ হয়েছে — সাইট রিলোড করলেই নতুন লেখা দেখা যাবে', 'success');
+}));
+
+/* ================= users & activity ================= */
+function userStats(u) {
+  const rs = reads.filter(r => r.uid === (u.uid || u.id));
+  return { rs, distinct: rs.length, total: rs.reduce((n, r) => n + (r.count || 0), 0), streak: streakOf(u.activeDays || []) };
+}
+function renderUsers() {
+  const today = dayKey();
+  $('navUsers').textContent = users.length;
+  $('uTotal').textContent = users.length;
+  $('uToday').textContent = users.filter(u => (u.activeDays || []).includes(today)).length;
+  $('uReads').textContent = reads.reduce((n, r) => n + (r.count || 0), 0);
+  const agg = {};
+  reads.forEach(r => { const a = agg[r.noteId] || (agg[r.noteId] = { name: r.name, sec: r.sectionName, n: 0, u: 0 }); a.n += r.count || 0; a.u++; });
+  const top = Object.values(agg).sort((a, b) => b.n - a.n).slice(0, 5);
+  $('uTop').innerHTML = top.length ? top.map((t, i) => '<div class="rrow"><span><b>' + toBn(i + 1) + '. ' + esc(t.name) + '</b><small>' + esc(t.sec) + '</small></span><span>' + toBn(t.n) + ' বার · ' + toBn(t.u) + ' জন</span></div>').join('')
+    : '<p class="hint">এখনো কেউ কিছু পড়েনি</p>';
+  const q = $('uSearch').value.trim().toLowerCase();
+  const list = users.filter(u => !q || ((u.name || '') + ' ' + (u.email || '')).toLowerCase().includes(q))
+    .sort((a, b) => (b.lastLoginAt || 0) - (a.lastLoginAt || 0));
+  $('uList').innerHTML = list.length ? list.map(u => {
+    const st = userStats(u);
+    return '<div class="urow" data-u="' + esc(u.id) + '">' + avatarHtml(u.name || u.email, u.photoURL, 'uav').replace('p-avatar', '') +
+      '<div><b>' + esc(u.name || '(নাম নেই)') + '</b><small>' + esc(u.email || '') + '</small><small>শেষ লগইন: ' + esc(ago(u.lastLoginAt)) + '</small></div>' +
+      '<div style="text-align:right"><span class="utag">' + toBn(st.distinct) + ' নোট</span><span class="utag">' + toBn(st.streak) + ' দিন টানা</span></div></div>';
+  }).join('') : emptyBox('fa-users', 'কোনো ইউজার নেই', 'কেউ লগইন করলে এখানে দেখা যাবে');
+}
+$('uSearch').addEventListener('input', renderUsers);
+$('uList').addEventListener('click', (e) => {
+  const row = e.target.closest('.urow'); if (!row) return;
+  const u = users.find(x => x.id === row.dataset.u); if (!u) return;
+  const st = userStats(u);
+  const rs = st.rs.slice().sort((a, b) => (b.lastAt || 0) - (a.lastAt || 0));
+  $('umTitle').textContent = u.name || u.email || 'ইউজার';
+  $('umBody').innerHTML =
+    '<p style="color:var(--soft);margin-bottom:12px;word-break:break-all">' + esc(u.email || '') + '</p>' +
+    '<div class="stat-row" style="grid-template-columns:repeat(2,1fr)">' +
+    '<div class="stat"><span>যোগ দিয়েছে</span><b style="font-size:1.05rem">' + esc(fmtDate(u.createdAt)) + '</b></div>' +
+    '<div class="stat"><span>শেষ লগইন</span><b style="font-size:1.05rem">' + esc(ago(u.lastLoginAt)) + '</b></div>' +
+    '<div class="stat"><span>পড়া নোট / মোট পড়া</span><b style="font-size:1.4rem">' + toBn(st.distinct) + ' / ' + toBn(st.total) + '</b></div>' +
+    '<div class="stat"><span>সক্রিয় দিন / টানা</span><b style="font-size:1.4rem">' + toBn((u.activeDays || []).length) + ' / ' + toBn(st.streak) + '</b></div></div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"><button class="btn btn-ghost" id="umPass"><i class="fa-solid fa-key"></i> নতুন পাসওয়ার্ড দিন</button><button class="btn btn-danger" id="umDel"><i class="fa-solid fa-trash"></i> ইউজার মুছুন</button></div>' +
+    '<h3 style="margin:6px 0">কী কী পড়েছে</h3>' +
+    (rs.length ? rs.map(r => '<div class="rrow"><span><b>' + esc(r.name) + '</b><small>' + esc([r.homeName, r.sectionName].filter(Boolean).join(' › ')) + '</small></span><span style="text-align:right">' + toBn(r.count || 1) + ' বার<small>' + esc(ago(r.lastAt)) + '</small></span></div>').join('')
+      : '<p class="hint">এখনো কিছু পড়েনি</p>');
+  openModal('userModal');
+  $('umPass').onclick = () => {
+    const np = prompt('"' + (u.name || u.email) + '" এর নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর):');
+    if (!np) return;
+    if (np.length < 6) { toast('কমপক্ষে ৬ অক্ষর দিন', 'error'); return; }
+    busy($('umPass'), 'সেভ হচ্ছে...', async () => {
+      const salt = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      const passHash = await hashPw(np, salt);
+      await setDoc(doc(db, 'users', u.id), { salt, passHash }, { merge: true });
+      toast('পাসওয়ার্ড বদলানো হয়েছে', 'success');
+    });
+  };
+  $('umDel').onclick = () => askConfirm('"' + (u.name || u.email) + '" ইউজারটি মুছে ফেলবেন? তার পড়ার ইতিহাসও মুছে যাবে।', async () => {
+    const mine = reads.filter(r => r.uid === (u.uid || u.id));
+    for (const r of mine) await deleteDoc(doc(db, 'reads', (u.uid || u.id) + '_' + r.noteId));
+    await deleteDoc(doc(db, 'users', u.id));
+    users = users.filter(x => x.id !== u.id); reads = reads.filter(r => r.uid !== (u.uid || u.id));
+    closeModal('userModal'); renderUsers(); toast('ইউজার মুছে ফেলা হয়েছে', 'success');
+  });
+});
+
+/* ================= start (+ admin check) ================= */
+async function start() {
+  try { await loadAll(); }
+  catch (err) { console.error(err); window.showAdminError && window.showAdminError(err.message || String(err)); }
+}
+start();
+
+</script>
+</body>
+</html>

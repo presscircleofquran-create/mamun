@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#04130F">
+<title>নোট</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;600;700&family=Amiri+Quran&family=Tiro+Bangla:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/islamic.css">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body class="p-body">
+<main class="p-wrap" id="app"></main><div class="p-progress" id="prog"></div>
+<script type="module">
+import { db, collection, getDocs, getDoc, doc, query, where } from "./assets/firebase.js";
+import { mountBg, mountNav, requireUser, touchUser, trackRead, topHtml, setTop, loaderHtml, msgHtml, divider, ICON, qs, esc, cleanHtml, textToHtml, autoDir, T } from "./assets/app.js";
+
+mountBg('note'); mountNav('home');
+const app = document.getElementById('app');
+document.body.insertAdjacentHTML('afterbegin', topHtml({ title: '...', back: 'index.html' }));
+app.innerHTML = loaderHtml(3);
+const user = await requireUser(); touchUser(user);
+const nid = qs('n');
+
+addEventListener('scroll', () => { const h = document.documentElement; const m = h.scrollHeight - h.clientHeight; document.getElementById('prog').style.transform = 'scaleX(' + (m > 0 ? Math.min(1, h.scrollTop / m) : 0) + ')'; }, { passive: true });
+
+try {
+  if (!nid) throw new Error('no id');
+  const snap = await getDoc(doc(db, 'sub_buttons', nid));
+  if (!snap.exists()) { app.innerHTML = msgHtml(T('note_missing'), true); throw 0; }
+  const s = snap.data();
+  document.title = s.name || 'নোট'; setTop(s.name || 'নোট', '');
+  let secName = '', homeName = '', siblings = [];
+  if (s.sectionId) {
+    document.getElementById('pBack').href = 'list.html?s=' + encodeURIComponent(s.sectionId);
+    try {
+      const sec = await getDoc(doc(db, 'section_buttons', s.sectionId));
+      if (sec.exists()) { secName = sec.data().name || ''; setTop(s.name || 'নোট', secName); }
+      const sib = await getDocs(query(collection(db, 'sub_buttons'), where('sectionId', '==', s.sectionId)));
+      siblings = sib.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
+    } catch (e) {}
+  }
+  if (s.homeId) { try { const h = await getDoc(doc(db, 'home_buttons', s.homeId)); if (h.exists()) homeName = h.data().name || ''; } catch (e) {} }
+  const html = s.noteHtml ? cleanHtml(s.noteHtml) : (s.note || '').trim() ? textToHtml(s.note) : '';
+  const idx = siblings.findIndex(x => x.id === nid);
+  const prev = idx > 0 ? siblings[idx - 1] : null, next = idx >= 0 && idx < siblings.length - 1 ? siblings[idx + 1] : null;
+  app.innerHTML = `<article class="p-paper"><h2 class="p-note-title">${esc(s.name)}</h2>${divider()}<div class="isl-rich p-rich" id="rich"></div></article>
+    <div class="p-nextrow">${prev ? `<a href="note.html?n=${encodeURIComponent(prev.id)}">${ICON.back}<span>${esc(prev.name)}</span></a>` : ''}${next ? `<a class="pri" href="note.html?n=${encodeURIComponent(next.id)}"><span>${esc(next.name)}</span>${ICON.next}</a>` : ''}</div>`;
+  const rich = document.getElementById('rich');
+  if (html) { rich.innerHTML = html; autoDir(rich); } else rich.innerHTML = '<p style="text-align:center;opacity:.7">'+esc(T('note_empty'))+'</p>';
+  setTimeout(() => trackRead(user, { id: nid, name: s.name, sectionId: s.sectionId, sectionName: secName, homeId: s.homeId, homeName }), 1500);
+} catch (err) { if (err) { console.error(err); app.innerHTML = msgHtml(T('load_err'), true); } }
+</script>
+</body>
+</html>
